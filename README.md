@@ -1,3 +1,8 @@
+# 对比实验，基于TabDDPM代码仓库更改
+原仓库地址：https://github.com/yandex-research/tab-ddpm
+
+
+
 # TabDDPM: Modelling Tabular Data with Diffusion Models
 This is the official code for our paper "TabDDPM: Modelling Tabular Data with Diffusion Models" ([paper](https://arxiv.org/abs/2209.15421))
 
