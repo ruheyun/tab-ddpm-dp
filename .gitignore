@@ -16,7 +16,6 @@ exp/**/**/results_catboost.json
 exp/**/**/results_mlp.json
 
 configs/
-data/
 junk/
 RF/
 exps/

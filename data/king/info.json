@@ -1,0 +1,11 @@
+{
+    "name": "king",
+    "id": "king--default",
+    "task_type": "regression",
+    "num_classes": null,
+    "n_num_features": 17,
+    "n_cat_features": 3,
+    "train_size": 13832,
+    "val_size": 3458,
+    "test_size": 4323
+}
