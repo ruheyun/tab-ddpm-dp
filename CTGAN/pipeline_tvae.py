@@ -39,7 +39,10 @@ def main():
             real_data_path=raw_config['real_data_path'],
             train_params=raw_config['train_params'],
             change_val=args.change_val,
-            device=raw_config['device']
+            device=raw_config['device'],
+            epsilon=raw_config['dp']['epsilon'],
+            delta=raw_config['dp']['delta'],
+            max_grad_norm=raw_config['dp']['max_grad_norm'],
         )
     if args.sample:
         sample_tvae(
