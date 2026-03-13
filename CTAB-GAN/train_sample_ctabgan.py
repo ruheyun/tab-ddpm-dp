@@ -1,4 +1,3 @@
-import lib
 import os
 import numpy as np
 import argparse
@@ -6,6 +5,11 @@ from pathlib import Path
 from model.ctabgan import CTABGAN
 import torch
 import pickle
+import sys
+ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.append(ROOT)
+import lib
+
 
 def train_ctabgan(
     parent_dir,
