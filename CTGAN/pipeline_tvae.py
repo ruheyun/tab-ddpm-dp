@@ -24,8 +24,8 @@ def save_file(parent_dir, config_path):
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--config', metavar='FILE')
-    parser.add_argument('--train', action='store_true',  default=False)
+    parser.add_argument('--config', metavar='FILE', default='exp/wilt/tvae/config.toml')
+    parser.add_argument('--train', action='store_true',  default=True)
     parser.add_argument('--sample', action='store_true',  default=False)
     parser.add_argument('--eval', action='store_true',  default=False)
     parser.add_argument('--change_val', action='store_true',  default=False)

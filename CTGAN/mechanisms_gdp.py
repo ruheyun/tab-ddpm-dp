@@ -1,12 +1,10 @@
 import argparse
-import torch
 from lib import load_config, load_json
 import os
 from scipy import optimize
 from scipy.stats import norm
 from math import sqrt
 import numpy as np
-import lib
 
 
 # Dual between mu-GDP and (epsilon,delta)-DP

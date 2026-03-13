@@ -18,7 +18,7 @@ def calculate_noise_multiplier(
         sample_size: int,
         batch_size: int,
         epochs: int,
-        accountant: str = "gdp"
+        accountant: str = "rdp"
 ) -> float:
     """
     计算达到目标隐私预算所需的噪声乘数
