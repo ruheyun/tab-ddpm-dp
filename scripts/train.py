@@ -11,6 +11,7 @@ from utils_train import get_model, make_dataset, update_ema
 import lib
 import pandas as pd
 
+
 class Trainer:
     def __init__(self, diffusion, train_iter, lr, weight_decay, steps, device=torch.device('cuda:1')):
         self.diffusion = diffusion
@@ -77,23 +78,24 @@ class Trainer:
 
             step += 1
 
+
 def train(
     parent_dir,
-    real_data_path = 'data/higgs-small',
-    steps = 1000,
-    lr = 0.002,
-    weight_decay = 1e-4,
-    batch_size = 1024,
-    model_type = 'mlp',
-    model_params = None,
-    num_timesteps = 1000,
-    gaussian_loss_type = 'mse',
-    scheduler = 'cosine',
-    T_dict = None,
-    num_numerical_features = 0,
-    device = torch.device('cuda:1'),
-    seed = 0,
-    change_val = False
+    real_data_path='data/higgs-small',
+    steps=1000,
+    lr=0.002,
+    weight_decay=1e-4,
+    batch_size=1024,
+    model_type='mlp',
+    model_params=None,
+    num_timesteps=1000,
+    gaussian_loss_type='mse',
+    scheduler='cosine',
+    T_dict=None,
+    num_numerical_features=0,
+    device=torch.device('cuda:1'),
+    seed=0,
+    change_val=False
 ):
     real_data_path = os.path.normpath(real_data_path)
     parent_dir = os.path.normpath(parent_dir)
@@ -131,8 +133,6 @@ def train(
 
     # train_loader = lib.prepare_beton_loader(dataset, split='train', batch_size=batch_size)
     train_loader = lib.prepare_fast_dataloader(dataset, split='train', batch_size=batch_size)
-
-
 
     diffusion = GaussianMultinomialDiffusion(
         num_classes=K,

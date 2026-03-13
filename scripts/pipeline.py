@@ -7,16 +7,16 @@ from sample import sample
 from eval_catboost import train_catboost
 from eval_mlp import train_mlp
 from eval_simple import train_simple
-import pandas as pd
-import matplotlib.pyplot as plt
 import zero
 import lib
 import torch
 
+
 def load_config(path) :
     with open(path, 'rb') as f:
         return tomli.load(f)
-    
+
+
 def save_file(parent_dir, config_path):
     try:
         dst = os.path.join(parent_dir)
@@ -24,6 +24,7 @@ def save_file(parent_dir, config_path):
         shutil.copyfile(os.path.abspath(config_path), dst)
     except shutil.SameFileError:
         pass
+
 
 def main():
     parser = argparse.ArgumentParser()
@@ -107,6 +108,7 @@ def main():
             )
 
     print(f'Elapsed time: {str(timer)}')
+
 
 if __name__ == '__main__':
     main()
