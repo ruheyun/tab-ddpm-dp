@@ -164,8 +164,7 @@ class TVAESynthesizer(BaseSynthesizer):
         self.transformer.fit(train_data, discrete_columns)
         train_data = self.transformer.transform(train_data)
         dataset = TensorDataset(torch.from_numpy(train_data.astype('float32')))
-        drop_last = (self.epsilon is not None)
-        loader = DataLoader(dataset, batch_size=self.batch_size, shuffle=True, drop_last=drop_last)
+        loader = DataLoader(dataset, batch_size=self.batch_size, shuffle=True)
 
         data_dim = self.transformer.output_dimensions
         encoder = Encoder(data_dim, self.compress_dims, self.embedding_dim).to(self._device)

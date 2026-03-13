@@ -7,10 +7,12 @@ from scripts.eval_catboost import train_catboost
 import zero
 import lib
 
+
 def load_config(path) :
     with open(path, 'rb') as f:
         return tomli.load(f)
-    
+
+
 def save_file(parent_dir, config_path):
     try:
         dst = os.path.join(parent_dir)
@@ -18,6 +20,7 @@ def save_file(parent_dir, config_path):
         shutil.copyfile(os.path.abspath(config_path), dst)
     except shutil.SameFileError:
         pass
+
 
 def main():
     parser = argparse.ArgumentParser()
@@ -32,9 +35,9 @@ def main():
     timer = zero.Timer()
     timer.run()
     save_file(os.path.join(raw_config['parent_dir'], 'config.toml'), args.config)
-    ctabgan = None
+    tvae = None
     if args.train:
-        ctabgan = train_tvae(
+        tvae = train_tvae(
             parent_dir=raw_config['parent_dir'],
             real_data_path=raw_config['real_data_path'],
             train_params=raw_config['train_params'],
@@ -47,7 +50,7 @@ def main():
         )
     if args.sample:
         sample_tvae(
-            synthesizer=ctabgan,
+            synthesizer=tvae,
             parent_dir=raw_config['parent_dir'],
             real_data_path=raw_config['real_data_path'],
             num_samples=raw_config['sample']['num_samples'],
@@ -79,6 +82,7 @@ def main():
         #     )
 
     print(f'Elapsed time: {str(timer)}')
+
 
 if __name__ == '__main__':
     main()
