@@ -14,7 +14,7 @@ class_dim = [
 ]
 batch_size = 2048
 #random_dim = 128
-num_channels = 64
+#num_channels = 64
 
 [sample]
 seed = 0
