@@ -78,7 +78,8 @@ class Decoder(Module):
 
         seq.append(Linear(dim, data_dim))
         self.seq = Sequential(*seq)
-        self.sigma = Parameter(torch.ones(data_dim) * 0.1)
+        # self.sigma = Parameter(torch.ones(data_dim) * 0.1)
+        self.register_buffer('sigma', torch.ones(data_dim) * 0.1)
 
     def forward(self, input_):
         """Decode the passed `input_`."""
