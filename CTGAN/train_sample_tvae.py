@@ -17,11 +17,12 @@ warnings.filterwarnings("ignore", category=ConvergenceWarning)
 def train_tvae(
     parent_dir,
     real_data_path,
-    train_params = {"batch_size": 512},
+    train_params={"batch_size": 512},
     change_val=False,
-    device = "cpu",
+    device="cpu",
     epsilon=None,
     delta=1e-5,
+    noise_multiplier=1.0,
     max_grad_norm=1.0,
 ):
     real_data_path = Path(real_data_path)
@@ -49,6 +50,7 @@ def train_tvae(
                     device=device,
                     epsilon=epsilon,
                     delta=delta,
+                    noise_multiplier=noise_multiplier,
                     max_grad_norm=max_grad_norm
                 ) 
     
@@ -60,12 +62,13 @@ def train_tvae(
 
     return synthesizer
 
+
 def sample_tvae(
     synthesizer,
     parent_dir,
     real_data_path,
     num_samples,
-    train_params = {"batch_size": 512},
+    train_params={"batch_size": 512},
     change_val=False,
     device="cpu",
     seed=0
@@ -82,7 +85,6 @@ def sample_tvae(
     X = lib.concat_to_pd(X_num_train, X_cat_train, y_train)
 
     X.columns = [str(_) for _ in X.columns]
-
 
     cat_features = list(map(str, range(X_num_train.shape[1], X_num_train.shape[1]+X_cat_train.shape[1]))) if X_cat_train is not None else []
     if lib.load_json(real_data_path / "info.json")["task_type"] != "regression":
@@ -110,6 +112,7 @@ def sample_tvae(
     if lib.load_json(real_data_path / "info.json")["task_type"] != "regression":
         y = y.astype(int)
     np.save(parent_dir / 'y_train', y) # only clf !!!
+
 
 def main():
     parser = argparse.ArgumentParser()

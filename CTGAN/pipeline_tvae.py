@@ -42,6 +42,7 @@ def main():
             device=raw_config['device'],
             epsilon=raw_config['dp']['epsilon'],
             delta=raw_config['dp']['delta'],
+            noise_multiplier=raw_config['dp']['noise_multiplier'],
             max_grad_norm=raw_config['dp']['max_grad_norm'],
         )
     if args.sample:

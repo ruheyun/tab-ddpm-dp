@@ -125,6 +125,7 @@ class TVAESynthesizer(BaseSynthesizer):
         loss_factor=2,
         device="cuda:0",
         epsilon=None,
+        noise_multiplier=1.0,
         delta=1e-5,
         max_grad_norm=1.0
     ):
@@ -142,6 +143,7 @@ class TVAESynthesizer(BaseSynthesizer):
 
         self.epsilon = epsilon
         self.delta = delta
+        self.noise_multiplier = noise_multiplier
         self.max_grad_norm = max_grad_norm
         self._privacy_engine = None
 
@@ -188,13 +190,11 @@ class TVAESynthesizer(BaseSynthesizer):
 
         if self.epsilon is not None:
             self._privacy_engine = PrivacyEngine()
-            tvae_module, optimizerAE, loader = self._privacy_engine.make_private_with_epsilon(
+            tvae_module, optimizerAE, loader = self._privacy_engine.make_private(
                 module=tvae_module,
                 optimizer=optimizerAE,
                 data_loader=loader,
-                epochs=self.epochs,
-                target_epsilon=self.epsilon,
-                target_delta=self.delta,
+                noise_multiplier=self.noise_multiplier,
                 max_grad_norm=self.max_grad_norm,
             )
             print(f'DP Enabled: Target Epsilon={self.epsilon}, Delta={self.delta}')
