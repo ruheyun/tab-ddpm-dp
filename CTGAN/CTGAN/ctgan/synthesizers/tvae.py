@@ -227,12 +227,12 @@ class TVAESynthesizer(BaseSynthesizer):
                     self.decoder.sigma.data.clamp_(0.01, 1.0)
                 else:
                     tvae_module.decoder.sigma.data.clamp_(0.01, 1.0)
-                if (i + 1) % 100 == 0:
-                    if self.epsilon is not None:
-                        current_epsilon = self._privacy_engine.get_epsilon(self.delta)
-                        print(f"{i + 1}/{self.epochs} Loss: {loss.item():.4f} Epsilon: {current_epsilon:.4f}", flush=True)
-                    else:
-                        print(f"{i + 1}/{self.epochs} Loss: {loss.item():.4f}", flush=True)
+            if (i + 1) % 100 == 0:
+                if self.epsilon is not None:
+                    current_epsilon = self._privacy_engine.get_epsilon(self.delta)
+                    print(f"{i + 1}/{self.epochs} Loss: {loss.item():.4f} Epsilon: {current_epsilon:.4f}", flush=True)
+                else:
+                    print(f"{i + 1}/{self.epochs} Loss: {loss.item():.4f}", flush=True)
         self.encoder = tvae_module.encoder
         self.decoder = tvae_module.decoder
 
