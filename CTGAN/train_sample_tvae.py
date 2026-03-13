@@ -1,5 +1,3 @@
-import lib
-import os
 import numpy as np
 import argparse
 from CTGAN.ctgan import TVAESynthesizer
@@ -8,6 +6,11 @@ import torch
 import pickle
 import warnings
 from sklearn.exceptions import ConvergenceWarning
+import os
+import sys
+ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.append(ROOT)
+import lib
 
 warnings.filterwarnings("ignore", category=ConvergenceWarning)
 
