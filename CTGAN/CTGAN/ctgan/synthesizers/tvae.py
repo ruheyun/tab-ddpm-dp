@@ -13,7 +13,7 @@ from ..data_transformer import DataTransformer
 from .base import BaseSynthesizer, random_state
 
 
-class TVAEWrapper(nn.Moule):
+class TVAEWrapper(nn.Module):
     def __init__(self, encoder, decoder):
         super().__init__()
         self.encoder = encoder
