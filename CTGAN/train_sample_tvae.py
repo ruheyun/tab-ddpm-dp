@@ -19,7 +19,10 @@ def train_tvae(
     real_data_path,
     train_params = {"batch_size": 512},
     change_val=False,
-    device = "cpu"
+    device = "cpu",
+    epsilon=None,
+    delta=1e-5,
+    max_grad_norm=1.0,
 ):
     real_data_path = Path(real_data_path)
     parent_dir = Path(parent_dir)
@@ -41,9 +44,12 @@ def train_tvae(
     train_params["batch_size"] = min(y_train.shape[0], train_params["batch_size"])
 
     print(train_params)
-    synthesizer =  TVAESynthesizer( 
+    synthesizer = TVAESynthesizer(
                     **train_params,
-                    device=device
+                    device=device,
+                    epsilon=epsilon,
+                    delta=delta,
+                    max_grad_norm=max_grad_norm
                 ) 
     
     synthesizer.fit(X, cat_features)

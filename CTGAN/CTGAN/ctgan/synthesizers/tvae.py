@@ -1,14 +1,23 @@
 """TVAESynthesizer module."""
-
 import numpy as np
 import torch
+import torch.nn as nn
 from torch.nn import Linear, Module, Parameter, ReLU, Sequential
 from torch.nn.functional import cross_entropy
 from torch.optim import Adam
 from torch.utils.data import DataLoader, TensorDataset
+from opacus import PrivacyEngine
+from opacus.validators import ModuleValidator
 
 from ..data_transformer import DataTransformer
 from .base import BaseSynthesizer, random_state
+
+
+class TVAEWrapper(nn.Moule):
+    def __init__(self, encoder, decoder):
+        super().__init__()
+        self.encoder = encoder
+        self.decoder = decoder
 
 
 class Encoder(Module):
@@ -113,7 +122,10 @@ class TVAESynthesizer(BaseSynthesizer):
         epochs=300,
         lr=1e-3,
         loss_factor=2,
-        device="cuda:0"
+        device="cuda:0",
+        epsilon=None,
+        delta=1e-5,
+        max_grad_norm=1.0
     ):
         self.embedding_dim = embedding_dim
         self.compress_dims = compress_dims
@@ -125,8 +137,12 @@ class TVAESynthesizer(BaseSynthesizer):
         self.loss_factor = loss_factor
         self.epochs = epochs
 
-        
         self._device = torch.device(device)
+
+        self.epsilon = epsilon
+        self.delta = delta
+        self.max_grad_norm = max_grad_norm
+        self._privacy_engine = None
 
     @random_state
     def fit(self, train_data, discrete_columns=()):
@@ -145,16 +161,46 @@ class TVAESynthesizer(BaseSynthesizer):
         self.transformer.fit(train_data, discrete_columns)
         train_data = self.transformer.transform(train_data)
         dataset = TensorDataset(torch.from_numpy(train_data.astype('float32')))
-        loader = DataLoader(dataset, batch_size=self.batch_size, shuffle=True, drop_last=False)
+        drop_last = (self.epsilon is not None)
+        loader = DataLoader(dataset, batch_size=self.batch_size, shuffle=True, drop_last=drop_last)
 
         data_dim = self.transformer.output_dimensions
         encoder = Encoder(data_dim, self.compress_dims, self.embedding_dim).to(self._device)
         self.decoder = Decoder(self.embedding_dim, self.decompress_dims, data_dim).to(self._device)
+
+        if self.epsilon is not None:
+            try:
+                if not ModuleValidator.is_valid(encoder):
+                    encoder = ModuleValidator.fix(encoder)
+                if not ModuleValidator.is_valid(self.decoder):
+                    self.decoder = ModuleValidator.fix(self.decoder)
+            except Exception as e:
+                print(f"Warning: ModuleValidator failed: {e}. Proceeding with original models.")
+
+        tvae_module = TVAEWrapper(encoder, self.decoder).to(self._device)
+
         optimizerAE = Adam(
-            list(encoder.parameters()) + list(self.decoder.parameters()),
+            # list(encoder.parameters()) + list(self.decoder.parameters()),
+            tvae_module.parameters(),
             lr=self.lr,
             weight_decay=self.l2scale)
-        data_iter = iter(loader) 
+
+        if self.epsilon is not None:
+            self._privacy_engine = PrivacyEngine()
+            tvae_module, optimizerAE, loader = self._privacy_engine.make_private_with_epsilon(
+                module=tvae_module,
+                optimizer=optimizerAE,
+                data_loader=loader,
+                epochs=self.epochs,
+                target_epsilon=self.epsilon,
+                target_delta=self.delta,
+                max_grad_norm=self.max_grad_norm,
+            )
+            print(f'DP Enabled: Target Epsilon={self.epsilon}, Delta={self.delta}')
+        else:
+            print('DP Disabled: Standard Training')
+
+        data_iter = iter(loader)
         print('Training:')
         for i in range(self.epochs):
             try:
@@ -163,12 +209,12 @@ class TVAESynthesizer(BaseSynthesizer):
                 data_iter = iter(loader)
                 data = next(data_iter)
 
-            optimizerAE.zero_grad()
+            optimizerAE.zero_grad(set_to_none=True)
             real = data[0].to(self._device)
-            mu, std, logvar = encoder(real)
+            mu, std, logvar = tvae_module.encoder(real)
             eps = torch.randn_like(std)
             emb = eps * std + mu
-            rec, sigmas = self.decoder(emb)
+            rec, sigmas = tvae_module.decoder(emb)
             loss_1, loss_2 = _loss_function(
                 rec, real, sigmas, mu, logvar,
                 self.transformer.output_info_list, self.loss_factor
@@ -176,9 +222,22 @@ class TVAESynthesizer(BaseSynthesizer):
             loss = loss_1 + loss_2
             loss.backward()
             optimizerAE.step()
-            self.decoder.sigma.data.clamp_(0.01, 1.0)
-            if (i + 1) % 1000 == 0:
-                print(f"{i + 1}/{self.epochs} {loss}", flush=True)
+            if self.epsilon is None:
+                self.decoder.sigma.data.clamp_(0.01, 1.0)
+            else:
+                tvae_module.decoder.sigma.data.clamp_(0.01, 1.0)
+            if (i + 1) % 500 == 0:
+                if self.epsilon is not None:
+                    current_epsilon = self._privacy_engine.get_epsilon(self.delta)
+                    print(f"{i + 1}/{self.epochs} Loss: {loss.item():.4f} Epsilon: {current_epsilon:.4f}", flush=True)
+                else:
+                    print(f"{i + 1}/{self.epochs} Loss: {loss.item():.4f}", flush=True)
+        self.encoder = tvae_module.encoder
+        self.decoder = tvae_module.decoder
+
+        if self.epsilon is not None:
+            final_epsilon = self._privacy_engine.get_epsilon(self.delta)
+            print(f'Training finished. Final Privacy ({final_epsilon:.4f}, {self.delta})-DP')
 
     @random_state
     def sample(self, samples, seed=0):
@@ -196,7 +255,7 @@ class TVAESynthesizer(BaseSynthesizer):
         torch.manual_seed(seed)
 
         self.decoder.eval()
-        
+
         sample_batch_size = 8092
         steps = samples // sample_batch_size + 1
         data = []
