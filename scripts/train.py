@@ -1,19 +1,42 @@
 from copy import deepcopy
 import torch
 import os
+from opacus import PrivacyEngine
 import numpy as np
+import pandas as pd
 import zero
 import sys
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.append(ROOT)
-from tab_ddpm import GaussianMultinomialDiffusion
-from utils_train import get_model, make_dataset, update_ema
-import lib
-import pandas as pd
+from tab_ddpm import GaussianMultinomialDiffusion  # noqa: E402
+from utils_train import get_model, make_dataset, update_ema  # noqa: E402
+import lib  # noqa: E402
+
+
+def print_grad_stats(model, name="before opacus"):
+    grads = []
+    for param in model.parameters():
+        if param.grad is not None:
+            grads.append(param.grad.view(-1))
+    if grads:
+        grads = torch.cat(grads)
+        print(f'[{name}] Gradients - Mean: {grads.mean().item(): .6f}, Std: {grads.std().item(): .6f}, '
+              f'Max: {grads.max().item(): .6f}, Min: {grads.min().item(): .6f}')
 
 
 class Trainer:
-    def __init__(self, diffusion, train_iter, lr, weight_decay, steps, device=torch.device('cuda:1')):
+    def __init__(
+            self,
+            diffusion,
+            train_iter,
+            lr,
+            weight_decay,
+            steps,
+            delta,
+            noise_multiplier,
+            max_grad_norm,
+            device=torch.device('cuda:1'),
+    ):
         self.diffusion = diffusion
         self.ema_model = deepcopy(self.diffusion._denoise_fn)
         for param in self.ema_model.parameters():
@@ -28,6 +51,18 @@ class Trainer:
         self.log_every = 100
         self.print_every = 500
         self.ema_every = 1000
+
+        self.delta = delta
+        self.noise_multiplier = noise_multiplier
+        self.max_grad_norm = max_grad_norm
+        self.privacy_engine = PrivacyEngine()
+        self.diffusion, self.optimizer, self.train_iter = self.privacy_engine.make_private(
+            module=self.diffusion,
+            optimizer=self.optimizer,
+            data_loader=self.train_iter,
+            noise_multiplier=self.noise_multiplier,
+            max_grad_norm=self.max_grad_norm
+        )
 
     def _anneal_lr(self, step):
         frac_done = step / self.steps
@@ -68,8 +103,10 @@ class Trainer:
                 mloss = np.around(curr_loss_multi / curr_count, 4)
                 gloss = np.around(curr_loss_gauss / curr_count, 4)
                 if (step + 1) % self.print_every == 0:
-                    print(f'Step {(step + 1)}/{self.steps} MLoss: {mloss} GLoss: {gloss} Sum: {mloss + gloss}')
-                self.loss_history.loc[len(self.loss_history)] =[step + 1, mloss, gloss, mloss + gloss]
+                    epsilon = self.privacy_engine.get_epsilon(delta=self.delta)
+                    print(f'Step {(step + 1)}/{self.steps} MLoss: {mloss} GLoss: {gloss} Sum: {mloss + gloss} '
+                          f'Epsilon: {epsilon: .4f}')
+                self.loss_history.loc[len(self.loss_history)] = [step + 1, mloss, gloss, mloss + gloss]
                 curr_count = 0
                 curr_loss_gauss = 0.0
                 curr_loss_multi = 0.0
@@ -92,10 +129,12 @@ def train(
     gaussian_loss_type='mse',
     scheduler='cosine',
     T_dict=None,
-    num_numerical_features=0,
     device=torch.device('cuda:1'),
     seed=0,
-    change_val=False
+    change_val=False,
+    delta=10.,
+    noise_multiplier=1.,
+    max_grad_norm=0.2,
 ):
     real_data_path = os.path.normpath(real_data_path)
     parent_dir = os.path.normpath(parent_dir)
@@ -131,8 +170,7 @@ def train(
     )
     model.to(device)
 
-    # train_loader = lib.prepare_beton_loader(dataset, split='train', batch_size=batch_size)
-    train_loader = lib.prepare_fast_dataloader(dataset, split='train', batch_size=batch_size)
+    train_loader = lib.prepare_fast_dp_dataloader(dataset, split='train', batch_size=batch_size)
 
     diffusion = GaussianMultinomialDiffusion(
         num_classes=K,
@@ -152,7 +190,10 @@ def train(
         lr=lr,
         weight_decay=weight_decay,
         steps=steps,
-        device=device
+        device=device,
+        delta=delta,
+        noise_multiplier=noise_multiplier,
+        max_grad_norm=max_grad_norm,
     )
     trainer.run_loop()
 

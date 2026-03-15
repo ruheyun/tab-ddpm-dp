@@ -17,6 +17,7 @@ from category_encoders import LeaveOneOutEncoder
 from sklearn.impute import SimpleImputer
 from sklearn.preprocessing import StandardScaler
 from scipy.spatial.distance import cdist
+from torch.utils.data import DataLoader, Dataset
 
 from . import env, util
 from .metrics import calculate_metrics as calculate_metrics_
@@ -591,8 +592,8 @@ class FastTensorDataLoader:
         return self.n_batches
 
 def prepare_fast_dataloader(
-    D : Dataset,
-    split : str,
+    D: Dataset,
+    split: str,
     batch_size: int
 ):
     if D.X_cat is not None:
@@ -606,6 +607,37 @@ def prepare_fast_dataloader(
     dataloader = FastTensorDataLoader(X, y, batch_size=batch_size, shuffle=(split=='train'))
     while True:
         yield from dataloader
+
+
+class FastTensorDataset(Dataset):
+    def __init__(self, *tensors):
+        assert all(t.shape[0] == tensors[0].shape[0] for t in tensors)
+        self.tensors = tensors
+
+    def __getitem__(self, index):
+        return tuple(tensor[index] for tensor in self.tensors)
+
+    def __len__(self):
+        return self.tensors[0].shape[0]
+
+
+def prepare_fast_dp_dataloader(
+    D: Dataset,
+    split: str,
+    batch_size: int
+):
+    if D.X_cat is not None:
+        if D.X_num is not None:
+            X = torch.from_numpy(np.concatenate([D.X_num[split], D.X_cat[split]], axis=1)).float()
+        else:
+            X = torch.from_numpy(D.X_cat[split]).float()
+    else:
+        X = torch.from_numpy(D.X_num[split]).float()
+    y = torch.from_numpy(D.y[split])
+    dataset = FastTensorDataset(X, y)
+    dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=(split == 'train'))
+    return dataloader
+
 
 def prepare_fast_torch_dataloader(
     D : Dataset,

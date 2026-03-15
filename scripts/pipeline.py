@@ -12,7 +12,7 @@ import lib
 import torch
 
 
-def load_config(path) :
+def load_config(path):
     with open(path, 'rb') as f:
         return tomli.load(f)
 
@@ -54,9 +54,11 @@ def main():
             model_type=raw_config['model_type'],
             model_params=raw_config['model_params'],
             T_dict=raw_config['train']['T'],
-            num_numerical_features=raw_config['num_numerical_features'],
             device=device,
-            change_val=args.change_val
+            change_val=args.change_val,
+            delta=raw_config['dp']['delta'],
+            noise_multiplier=raw_config['dp']['moise_multiplier'],
+            max_grad_norm=raw_config['dp']['max_grad_norm'],
         )
     if args.sample:
         sample(
