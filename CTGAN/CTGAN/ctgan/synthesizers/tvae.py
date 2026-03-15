@@ -8,6 +8,7 @@ from torch.optim import Adam
 from torch.utils.data import DataLoader, TensorDataset
 from opacus import PrivacyEngine
 from opacus.validators import ModuleValidator
+from tqdm import tqdm
 
 from ..data_transformer import DataTransformer
 from .base import BaseSynthesizer, random_state
@@ -201,31 +202,39 @@ class TVAESynthesizer(BaseSynthesizer):
             print('DP Disabled: Standard Training')
 
         print('Training:')
-        for i in range(self.epochs):
-            for data in loader:
-                optimizerAE.zero_grad(set_to_none=True)
-                real = data[0].to(self._device)
-                mu, std, logvar = tvae_module.encoder(real)
-                eps = torch.randn_like(std)
-                emb = eps * std + mu
-                rec, sigmas = tvae_module.decoder(emb)
-                loss_1, loss_2 = _loss_function(
-                    rec, real, sigmas, mu, logvar,
-                    self.transformer.output_info_list, self.loss_factor
-                )
-                loss = loss_1 + loss_2
-                loss.backward()
-                optimizerAE.step()
-                if self.epsilon is None:
-                    self.decoder.sigma.data.clamp_(0.01, 1.0)
-                else:
-                    tvae_module.decoder.sigma.data.clamp_(0.01, 1.0)
-            if (i + 1) % 100 == 0:
+        with tqdm(range(self.epochs), desc='Training') as epoch_bar:
+            for i in epoch_bar:
+                with tqdm(loader, leave=False, desc=f'Epoch {i + 1}') as batch_bar:
+                    for data in batch_bar:
+                        optimizerAE.zero_grad(set_to_none=True)
+                        real = data[0].to(self._device)
+                        mu, std, logvar = tvae_module.encoder(real)
+                        eps = torch.randn_like(std)
+                        emb = eps * std + mu
+                        rec, sigmas = tvae_module.decoder(emb)
+                        loss_1, loss_2 = _loss_function(
+                            rec, real, sigmas, mu, logvar,
+                            self.transformer.output_info_list, self.loss_factor
+                        )
+                        loss = loss_1 + loss_2
+                        loss.backward()
+                        optimizerAE.step()
+                        if self.epsilon is None:
+                            self.decoder.sigma.data.clamp_(0.01, 1.0)
+                        else:
+                            tvae_module.decoder.sigma.data.clamp_(0.01, 1.0)
+                # if (i + 1) % 10 == 0:
+                #     if self.epsilon is not None:
+                #         current_epsilon = self._privacy_engine.get_epsilon(self.delta)
+                #         print(f"{i + 1}/{self.epochs} Loss: {loss.item():.4f} Epsilon: {current_epsilon:.4f}", flush=True)
+                #     else:
+                #         print(f"{i + 1}/{self.epochs} Loss: {loss.item():.4f}", flush=True)
+                postfix = {'Loss': f'{loss.item():.4f}'}
                 if self.epsilon is not None:
                     current_epsilon = self._privacy_engine.get_epsilon(self.delta)
-                    print(f"{i + 1}/{self.epochs} Loss: {loss.item():.4f} Epsilon: {current_epsilon:.4f}", flush=True)
-                else:
-                    print(f"{i + 1}/{self.epochs} Loss: {loss.item():.4f}", flush=True)
+                    postfix['Epsilon'] = f'{current_epsilon:.4f}'
+
+                epoch_bar.set_postfix(postfix)
         self.encoder = tvae_module.encoder
         self.decoder = tvae_module.decoder
 
