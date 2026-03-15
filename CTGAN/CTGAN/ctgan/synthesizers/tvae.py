@@ -232,9 +232,9 @@ class TVAESynthesizer(BaseSynthesizer):
                     )
                     loss = loss_1 + loss_2
                     loss.backward()
-                    if self.epsilon is None and flag:
-                        print_grad_stats(tvae_module, batch_size=self.batch_size)
-                        flag = False
+                    # if self.epsilon is None and flag:
+                    #     print_grad_stats(tvae_module, batch_size=self.batch_size)
+                    #     flag = False
                     optimizerAE.step()
                     if self.epsilon is None:
                         self.decoder.sigma.data.clamp_(0.01, 1.0)
