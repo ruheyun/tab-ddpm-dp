@@ -201,28 +201,26 @@ class TVAESynthesizer(BaseSynthesizer):
         else:
             print('DP Disabled: Standard Training')
 
-        print('Training:')
         with tqdm(range(self.epochs), desc='Training') as epoch_bar:
             for i in epoch_bar:
-                with tqdm(loader, leave=False, desc=f'Epoch {i + 1}') as batch_bar:
-                    for data in batch_bar:
-                        optimizerAE.zero_grad(set_to_none=True)
-                        real = data[0].to(self._device)
-                        mu, std, logvar = tvae_module.encoder(real)
-                        eps = torch.randn_like(std)
-                        emb = eps * std + mu
-                        rec, sigmas = tvae_module.decoder(emb)
-                        loss_1, loss_2 = _loss_function(
-                            rec, real, sigmas, mu, logvar,
-                            self.transformer.output_info_list, self.loss_factor
-                        )
-                        loss = loss_1 + loss_2
-                        loss.backward()
-                        optimizerAE.step()
-                        if self.epsilon is None:
-                            self.decoder.sigma.data.clamp_(0.01, 1.0)
-                        else:
-                            tvae_module.decoder.sigma.data.clamp_(0.01, 1.0)
+                for data in loader:
+                    optimizerAE.zero_grad(set_to_none=True)
+                    real = data[0].to(self._device)
+                    mu, std, logvar = tvae_module.encoder(real)
+                    eps = torch.randn_like(std)
+                    emb = eps * std + mu
+                    rec, sigmas = tvae_module.decoder(emb)
+                    loss_1, loss_2 = _loss_function(
+                        rec, real, sigmas, mu, logvar,
+                        self.transformer.output_info_list, self.loss_factor
+                    )
+                    loss = loss_1 + loss_2
+                    loss.backward()
+                    optimizerAE.step()
+                    if self.epsilon is None:
+                        self.decoder.sigma.data.clamp_(0.01, 1.0)
+                    else:
+                        tvae_module.decoder.sigma.data.clamp_(0.01, 1.0)
                 # if (i + 1) % 10 == 0:
                 #     if self.epsilon is not None:
                 #         current_epsilon = self._privacy_engine.get_epsilon(self.delta)
