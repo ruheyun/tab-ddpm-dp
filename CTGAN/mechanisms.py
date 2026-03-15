@@ -156,7 +156,9 @@ def print_dp_summary(
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--config', metavar='file', default='exp/wilt/tvae/config.toml')
+    parser.add_argument('--config', metavar='file', default='exp/adult/tvae/config.toml')
+    parser.add_argument('--eps', type=str,  choices=['one', 'five', 'ten'], default='ten')
+
     args, _ = parser.parse_known_args()
     raw_config = load_config(args.config)
     raw_info = load_json(os.path.join(raw_config['real_data_path'], 'info.json'))
@@ -165,8 +167,8 @@ def main():
         sample_size=raw_info['train_size'],
         batch_size=raw_config['train_params']['batch_size'],
         epochs=raw_config['train_params']['epochs'],
-        target_epsilon=raw_config['dp']['epsilon'],
-        target_delta=raw_config['dp']['delta'],
+        target_epsilon=raw_config['dp'][args.eps]['epsilon'],
+        target_delta=raw_config['dp'][args.eps]['delta'],
     )
 
 

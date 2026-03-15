@@ -200,16 +200,9 @@ class TVAESynthesizer(BaseSynthesizer):
         else:
             print('DP Disabled: Standard Training')
 
-        # data_iter = iter(loader)
         print('Training:')
         for i in range(self.epochs):
-            # try:
-            #     data = next(data_iter)
-            # except:
-            #     data_iter = iter(loader)
-            #     data = next(data_iter)
             for data in loader:
-
                 optimizerAE.zero_grad(set_to_none=True)
                 real = data[0].to(self._device)
                 mu, std, logvar = tvae_module.encoder(real)
