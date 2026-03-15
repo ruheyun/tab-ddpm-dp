@@ -111,6 +111,17 @@ def _loss_function(recon_x, x, sigmas, mu, logvar, output_info, factor):
     return sum(loss) * factor / x.size()[0], KLD / x.size()[0]
 
 
+def print_grad_stats(model, name="before opacus"):
+    grads = []
+    for param in model.parameters():
+        if param.grad is not None:
+            grads.append(param.grad.view(-1))
+    if grads:
+        grads = torch.cat(grads)
+        print(f'[{name}] Gradients - Mean: {grads.mean().item(): .6f}, Std: {grads.std().item(): .6f}, '
+              f'Max: {grads.max().item(): .6f}, Min: {grads.min().item(): .6f}')
+
+
 class TVAESynthesizer(BaseSynthesizer):
     """TVAESynthesizer."""
 
@@ -216,17 +227,13 @@ class TVAESynthesizer(BaseSynthesizer):
                     )
                     loss = loss_1 + loss_2
                     loss.backward()
+                    if self.epsilon is None:
+                        print_grad_stats(tvae_module)
                     optimizerAE.step()
                     if self.epsilon is None:
                         self.decoder.sigma.data.clamp_(0.01, 1.0)
                     else:
                         tvae_module.decoder.sigma.data.clamp_(0.01, 1.0)
-                # if (i + 1) % 10 == 0:
-                #     if self.epsilon is not None:
-                #         current_epsilon = self._privacy_engine.get_epsilon(self.delta)
-                #         print(f"{i + 1}/{self.epochs} Loss: {loss.item():.4f} Epsilon: {current_epsilon:.4f}", flush=True)
-                #     else:
-                #         print(f"{i + 1}/{self.epochs} Loss: {loss.item():.4f}", flush=True)
                 postfix = {'Loss': f'{loss.item():.4f}'}
                 if self.epsilon is not None:
                     current_epsilon = self._privacy_engine.get_epsilon(self.delta)
