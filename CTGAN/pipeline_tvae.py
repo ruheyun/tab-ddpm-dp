@@ -29,10 +29,16 @@ def main():
     parser.add_argument('--sample', action='store_true',  default=False)
     parser.add_argument('--eval', action='store_true',  default=False)
     parser.add_argument('--change_val', action='store_true',  default=False)
-    parser.add_argument('--eps', type=str,  choices=['one', 'five', 'ten', 'common'], default='common')
+    parser.add_argument('--epsilon', type=float, default=-1)
+    parser.add_argument('--noise_multiplier', type=float, default=1)
+    parser.add_argument('--max_grad_norm', type=float, default=1)
 
     args = parser.parse_args()
     raw_config = lib.load_config(args.config)
+    if args.epsilon != -1:
+        raw_config['dp']['epsilon'] = args.epsilon
+        raw_config['dp']['noise_multiplier'] = args.noise_multiplier
+        raw_config['dp']['max_grad_norm'] = args.max_grad_norm
     timer = zero.Timer()
     timer.run()
     save_file(os.path.join(raw_config['parent_dir'], 'config.toml'), args.config)
@@ -44,10 +50,10 @@ def main():
             train_params=raw_config['train_params'],
             change_val=args.change_val,
             device=raw_config['device'],
-            epsilon=raw_config['dp'][args.eps]['epsilon'],
-            delta=raw_config['dp'][args.eps]['delta'],
-            noise_multiplier=raw_config['dp'][args.eps]['noise_multiplier'],
-            max_grad_norm=raw_config['dp'][args.eps]['max_grad_norm'],
+            epsilon=raw_config['dp']['epsilon'],
+            delta=raw_config['dp']['delta'],
+            noise_multiplier=raw_config['dp']['noise_multiplier'],
+            max_grad_norm=raw_config['dp']['max_grad_norm'],
         )
     if args.sample:
         sample_tvae(
