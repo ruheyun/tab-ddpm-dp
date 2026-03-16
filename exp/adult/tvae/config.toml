@@ -4,7 +4,7 @@ seed = 0
 device = "cuda:0"
 
 [train_params]
-lr = 0.00032660626928874973
+lr = 1e-4
 epochs = 100
 embedding_dim = 512
 batch_size = 128
