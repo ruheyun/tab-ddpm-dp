@@ -7,15 +7,15 @@ device = "cuda:0"
 lr = 1e-5
 epochs = 200
 embedding_dim = 512
-batch_size = 256
+batch_size = 512
 loss_factor = 1.1675626917524105
 compress_dims = [
     256,
-    256,
+    512,
 ]
 decompress_dims = [
     256,
-    256,
+    512,
 ]
 
 [sample]
