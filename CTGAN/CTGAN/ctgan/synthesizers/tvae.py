@@ -204,7 +204,7 @@ class TVAESynthesizer(BaseSynthesizer):
             weight_decay=self.l2scale)
 
         if self.epsilon is not None:
-            self._privacy_engine = PrivacyEngine(accountant='gdp')
+            self._privacy_engine = PrivacyEngine()
             tvae_module, optimizerAE, loader = self._privacy_engine.make_private(
                 module=tvae_module,
                 optimizer=optimizerAE,
