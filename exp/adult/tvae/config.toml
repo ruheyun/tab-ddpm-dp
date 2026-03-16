@@ -5,9 +5,9 @@ device = "cuda:0"
 
 [train_params]
 lr = 0.00032660626928874973
-epochs = 50
+epochs = 100
 embedding_dim = 512
-batch_size = 512
+batch_size = 128
 loss_factor = 1.1675626917524105
 compress_dims = [
     256,
@@ -44,8 +44,8 @@ noise_multiplier = 2.3242
 [dp.ten]
 epsilon = 10
 delta = 1e-5
-max_grad_norm = 0.5
-noise_multiplier = 0.9591
+max_grad_norm = 1
+noise_multiplier = 0.7591
 
 [dp.five]
 epsilon = 5
