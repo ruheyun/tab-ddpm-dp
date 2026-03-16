@@ -17,7 +17,7 @@ def calculate_noise_multiplier(
         sample_size: int,
         batch_size: int,
         epochs: int,
-        accountant: str = "gdp"
+        accountant: str = "rdp"
 ) -> float:
     sample_rate = batch_size / sample_size
 
