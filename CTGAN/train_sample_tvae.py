@@ -14,6 +14,7 @@ import lib
 
 warnings.filterwarnings("ignore", category=ConvergenceWarning)
 
+
 def train_tvae(
     parent_dir,
     real_data_path,
@@ -22,7 +23,7 @@ def train_tvae(
     device="cpu",
     epsilon=None,
     delta=1e-5,
-    noise_multiplier=1.0,
+    # noise_multiplier=1.0,
     max_grad_norm=1.0,
 ):
     real_data_path = Path(real_data_path)
@@ -50,7 +51,7 @@ def train_tvae(
                     device=device,
                     epsilon=epsilon,
                     delta=delta,
-                    noise_multiplier=noise_multiplier,
+                    # noise_multiplier=noise_multiplier,
                     max_grad_norm=max_grad_norm
                 ) 
     

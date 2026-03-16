@@ -43,9 +43,9 @@ def objective(trial):
     d_layers = d_first + d_middle + d_last
     ####
 
-    steps = trial.suggest_categorical('steps', [5000, 20000, 30000])
+    steps = trial.suggest_categorical('steps', [100, 500, 1000])
     # steps = trial.suggest_categorical('steps', [1000])
-    batch_size = trial.suggest_categorical('batch_size', [256, 4096])
+    batch_size = trial.suggest_categorical('batch_size', [256, 512])
 
     num_samples = int(train_size * (2 ** trial.suggest_int('frac_samples', -2, 3)))
     embedding_dim = 2 ** trial.suggest_int('embedding_dim', 6, 10)

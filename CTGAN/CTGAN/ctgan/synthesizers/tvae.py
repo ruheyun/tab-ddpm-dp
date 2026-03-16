@@ -141,7 +141,7 @@ class TVAESynthesizer(BaseSynthesizer):
         loss_factor=2,
         device="cuda:0",
         epsilon=None,
-        noise_multiplier=1.0,
+        # noise_multiplier=1.0,
         delta=1e-5,
         max_grad_norm=1.0
     ):
@@ -159,7 +159,7 @@ class TVAESynthesizer(BaseSynthesizer):
 
         self.epsilon = epsilon
         self.delta = delta
-        self.noise_multiplier = noise_multiplier
+        # self.noise_multiplier = noise_multiplier
         self.max_grad_norm = max_grad_norm
         self._privacy_engine = None
 
@@ -198,18 +198,19 @@ class TVAESynthesizer(BaseSynthesizer):
         tvae_module = TVAEWrapper(encoder, self.decoder).to(self._device)
 
         optimizerAE = Adam(
-            # list(encoder.parameters()) + list(self.decoder.parameters()),
             tvae_module.parameters(),
             lr=self.lr,
             weight_decay=self.l2scale)
 
         if self.epsilon is not None:
             self._privacy_engine = PrivacyEngine()
-            tvae_module, optimizerAE, loader = self._privacy_engine.make_private(
+            tvae_module, optimizerAE, loader = self._privacy_engine.make_private_with_epsilon(
                 module=tvae_module,
                 optimizer=optimizerAE,
                 data_loader=loader,
-                noise_multiplier=self.noise_multiplier,
+                epochs=self.epochs,
+                target_epsilon=self.epsilon,
+                target_delta=self.delta,
                 max_grad_norm=self.max_grad_norm,
             )
             print(f'DP Enabled: Target Epsilon={self.epsilon}, Delta={self.delta}')
@@ -218,7 +219,7 @@ class TVAESynthesizer(BaseSynthesizer):
 
         with tqdm(range(self.epochs), desc='Training') as epoch_bar:
             for i in epoch_bar:
-                flag = True
+                # flag = True
                 for data in loader:
                     optimizerAE.zero_grad(set_to_none=True)
                     real = data[0].to(self._device)

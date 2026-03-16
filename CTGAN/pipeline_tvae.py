@@ -8,7 +8,7 @@ import zero
 import lib
 
 
-def load_config(path) :
+def load_config(path):
     with open(path, 'rb') as f:
         return tomli.load(f)
 
@@ -30,14 +30,12 @@ def main():
     parser.add_argument('--eval', action='store_true',  default=False)
     parser.add_argument('--change_val', action='store_true',  default=False)
     parser.add_argument('--epsilon', type=float, default=-1)
-    parser.add_argument('--noise_multiplier', type=float, default=1)
     parser.add_argument('--max_grad_norm', type=float, default=1)
 
     args = parser.parse_args()
     raw_config = lib.load_config(args.config)
     if args.epsilon != -1:
         raw_config['dp']['epsilon'] = args.epsilon
-        raw_config['dp']['noise_multiplier'] = args.noise_multiplier
         raw_config['dp']['max_grad_norm'] = args.max_grad_norm
     timer = zero.Timer()
     timer.run()
@@ -52,7 +50,7 @@ def main():
             device=raw_config['device'],
             epsilon=raw_config['dp']['epsilon'],
             delta=raw_config['dp']['delta'],
-            noise_multiplier=raw_config['dp']['noise_multiplier'],
+            # noise_multiplier=raw_config['dp']['noise_multiplier'],
             max_grad_norm=raw_config['dp']['max_grad_norm'],
         )
     if args.sample:
