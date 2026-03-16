@@ -4,7 +4,7 @@ seed = 0
 device = "cuda:0"
 
 [train_params]
-lr = 1e-5
+lr = 1e-4
 epochs = 200
 embedding_dim = 512
 batch_size = 512
@@ -40,4 +40,3 @@ epsilon = "__none__"
 delta = 1e-5
 max_grad_norm = 1
 noise_multiplier = 2
-
