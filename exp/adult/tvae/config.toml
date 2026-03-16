@@ -5,7 +5,7 @@ device = "cuda:0"
 
 [train_params]
 lr = 0.00032660626928874973
-epochs = 50
+epochs = 1000
 embedding_dim = 512
 batch_size = 512
 loss_factor = 1.1675626917524105
@@ -39,4 +39,4 @@ y_policy = "default"
 epsilon = "__none__" # 10  5  1
 delta = 1e-5
 max_grad_norm = 1
-noise_multiplier = 2
+noise_multiplier = 2 # 0.8392  1.1902
