@@ -38,8 +38,8 @@ def main():
 
     args = parser.parse_args()
     raw_config = lib.load_config(args.config)
-    if args.epoches:
-        raw_config['train_params']['epochs'] = args.epoches
+    if args.epochs:
+        raw_config['train_params']['epochs'] = args.epochs
     if args.batch_size:
         raw_config['train_params']['batch_size'] = args.batch_size
     if args.epsilon:
