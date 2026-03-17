@@ -497,7 +497,7 @@ class CTABGANSynthesizer:
 
         torch.manual_seed(seed)
         torch.cuda.manual_seed(seed)
-        sample_batch_size = 8092
+        sample_batch_size = 256
         self.generator.eval()
 
         output_info = self.transformer.output_info
