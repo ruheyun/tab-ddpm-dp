@@ -29,13 +29,22 @@ def main():
     parser.add_argument('--sample', action='store_true',  default=False)
     parser.add_argument('--eval', action='store_true',  default=False)
     parser.add_argument('--change_val', action='store_true',  default=False)
-    parser.add_argument('--epsilon', type=float, default=-1)
-    parser.add_argument('--max_grad_norm', type=float, default=1.)
+
+    parser.add_argument('--epochs', type=int, default=0)
+    parser.add_argument('--batch_size', type=int, default=0)
+
+    parser.add_argument('--epsilon', type=float, default=0)
+    parser.add_argument('--max_grad_norm', type=float, default=0)
 
     args = parser.parse_args()
     raw_config = lib.load_config(args.config)
-    if args.epsilon != -1:
+    if args.epoches:
+        raw_config['train_params']['epochs'] = args.epoches
+    if args.batch_size:
+        raw_config['train_params']['batch_size'] = args.batch_size
+    if args.epsilon:
         raw_config['dp']['epsilon'] = args.epsilon
+    if args.max_grad_norm:
         raw_config['dp']['max_grad_norm'] = args.max_grad_norm
     timer = zero.Timer()
     timer.run()
