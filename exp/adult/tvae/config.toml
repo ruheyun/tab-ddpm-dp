@@ -20,7 +20,7 @@ decompress_dims = [
 
 [sample]
 seed = 0
-num_samples = 26048
+num_samples = 52096
 
 [eval.type]
 eval_model = "catboost"
