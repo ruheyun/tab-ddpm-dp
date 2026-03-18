@@ -1,4 +1,3 @@
-from multiprocessing.sharedctypes import RawValue
 import tempfile
 import subprocess
 import lib
@@ -22,6 +21,7 @@ train_size = args.train_size
 device = args.device
 assert eval_type in ('merged', 'synthetic')
 
+
 def objective(trial):
     
     lr = trial.suggest_loguniform('lr', 0.00001, 0.003)
@@ -43,14 +43,12 @@ def objective(trial):
     d_layers = d_first + d_middle + d_last
     ####
 
-    steps = trial.suggest_categorical('steps', [100, 500, 1000])
-    # steps = trial.suggest_categorical('steps', [1000])
-    batch_size = trial.suggest_categorical('batch_size', [256, 512])
+    steps = trial.suggest_categorical('steps', [50, 100, 300, 500])
+    batch_size = trial.suggest_categorical('batch_size', [128, 256, 512])
 
-    num_samples = int(train_size * (2 ** trial.suggest_int('frac_samples', -2, 3)))
-    embedding_dim = 2 ** trial.suggest_int('embedding_dim', 6, 10)
+    num_samples = int(train_size * (2 ** trial.suggest_int('frac_samples', -1, 2)))
+    embedding_dim = 2 ** trial.suggest_int('embedding_dim', 6, 9)
     loss_factor = trial.suggest_loguniform('loss_factor', 0.001, 10)
-
 
     train_params = {
         "lr": lr,
@@ -68,7 +66,7 @@ def objective(trial):
     score = 0.0
     with tempfile.TemporaryDirectory() as dir_:
         dir_ = Path(dir_)
-        ctabgan = train_tvae(
+        tvae = train_tvae(
             parent_dir=dir_,
             real_data_path=real_data_path,
             train_params=train_params,
@@ -78,7 +76,7 @@ def objective(trial):
 
         for sample_seed in range(5):
             sample_tvae(
-                ctabgan,
+                tvae,
                 parent_dir=dir_,
                 real_data_path=real_data_path,
                 num_samples=num_samples,
@@ -103,7 +101,7 @@ def objective(trial):
                 eval_type=eval_type,
                 T_dict=T_dict,
                 change_val=True,
-                seed = 0
+                seed=0
             )
 
             score += metrics.get_val_score()

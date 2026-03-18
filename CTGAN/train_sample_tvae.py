@@ -23,7 +23,6 @@ def train_tvae(
     device="cpu",
     epsilon=None,
     delta=1e-5,
-    # noise_multiplier=1.0,
     max_grad_norm=1.0,
 ):
     real_data_path = Path(real_data_path)

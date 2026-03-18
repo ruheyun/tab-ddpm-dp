@@ -18,6 +18,7 @@ pipeline = {
     'tvae': 'CTGAN/pipeline_tvae.py'
 }
 
+
 def eval_seeds(
     raw_config,
     n_seeds,
@@ -95,6 +96,7 @@ def eval_seeds(
     lib.dump_config(raw_config, parent_dir / 'config.toml')
     return res
 
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--config', metavar='FILE')
@@ -116,6 +118,7 @@ def main():
         n_datasets=args.n_datasets,
         dump=args.no_dump
     )
+
 
 if __name__ == '__main__':
     main()
