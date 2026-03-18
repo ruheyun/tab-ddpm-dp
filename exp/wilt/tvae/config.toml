@@ -40,12 +40,6 @@ cat_encoding = "__none__"
 y_policy = "default"
 
 [dp]
-epsilon = 10   # None  1  5  10
-delta = 1e-5
-max_grad_norm = 1.0
-noise_multiplier = 3.3937
-
-[dp]
 epsilon = "__none__" # 10  5  1
 delta = 1e-3
 max_grad_norm = 1
