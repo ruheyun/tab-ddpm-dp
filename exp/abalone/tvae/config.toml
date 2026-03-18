@@ -4,7 +4,7 @@ seed = 0
 device = "cuda:0"
 
 [train_params]
-lr = 0.0006509130949439269
+lr = 1e-4
 epochs = 300
 embedding_dim = 64 # 128
 batch_size = 128
@@ -20,7 +20,7 @@ decompress_dims = [
 
 [sample]
 seed = 0
-num_samples = 21600
+num_samples = 2672
 
 [eval.type]
 eval_model = "catboost"
