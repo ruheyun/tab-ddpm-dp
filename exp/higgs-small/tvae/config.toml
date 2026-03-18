@@ -6,7 +6,7 @@ device = "cuda:0"
 [train_params]
 lr = 0.0003106059409975757
 epochs = 30000
-embedding_dim = 128
+embedding_dim = 256
 batch_size = 4096
 loss_factor = 6.425117768649489
 compress_dims = [
