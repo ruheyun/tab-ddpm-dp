@@ -4,6 +4,7 @@ import os
 import argparse
 from train_sample_tvae import train_tvae, sample_tvae
 from scripts.eval_catboost import train_catboost
+from scripts.eval_simple import train_simple
 import zero
 import lib
 
@@ -59,7 +60,6 @@ def main():
             device=raw_config['device'],
             epsilon=raw_config['dp']['epsilon'],
             delta=raw_config['dp']['delta'],
-            # noise_multiplier=raw_config['dp']['noise_multiplier'],
             max_grad_norm=raw_config['dp']['max_grad_norm'],
         )
     if args.sample:
@@ -85,15 +85,15 @@ def main():
                 seed=raw_config['seed'],
                 change_val=args.change_val
             )
-        # elif raw_config['eval']['type']['eval_model'] == 'mlp':
-        #     train_mlp(
-        #         parent_dir=raw_config['parent_dir'],
-        #         real_data_path=raw_config['real_data_path'],
-        #         eval_type=raw_config['eval']['type']['eval_type'],
-        #         T_dict=raw_config['eval']['T'],
-        #         seed=raw_config['seed'],
-        #         change_val=args.change_val
-        #     )
+        elif raw_config['eval']['type']['eval_model'] == 'simple':
+            train_simple(
+                parent_dir=raw_config['parent_dir'],
+                real_data_path=raw_config['real_data_path'],
+                eval_type=raw_config['eval']['type']['eval_type'],
+                T_dict=raw_config['eval']['T'],
+                seed=raw_config['seed'],
+                change_val=args.change_val
+            )
 
     print(f'Elapsed time: {str(timer)}')
 
