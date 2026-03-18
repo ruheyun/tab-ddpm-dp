@@ -42,4 +42,4 @@ y_policy = "default"
 [dp]
 epsilon = "__none__" # 10  5  1
 delta = 1e-3
-max_grad_norm = 1
+max_grad_norm = 0.2

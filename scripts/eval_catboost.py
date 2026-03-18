@@ -75,7 +75,7 @@ def train_catboost(
         {'train': y, 'val': y_val, 'test': y_test},
         {},
         lib.TaskType(info['task_type']),
-        info.get('n_classes')
+        info.get('num_classes')
     )
 
     D = lib.transform_dataset(D, T, None)
