@@ -218,7 +218,7 @@ class TVAESynthesizer(BaseSynthesizer):
             print('DP Disabled: Standard Training')
 
         with tqdm(range(self.epochs), desc='Training') as epoch_bar:
-            for i in epoch_bar:
+            for _ in epoch_bar:
                 # flag = True
                 for data in loader:
                     optimizerAE.zero_grad(set_to_none=True)
@@ -271,7 +271,7 @@ class TVAESynthesizer(BaseSynthesizer):
 
         self.decoder.eval()
 
-        sample_batch_size = 8092
+        sample_batch_size = 256
         steps = samples // sample_batch_size + 1
         data = []
         for _ in range(steps):

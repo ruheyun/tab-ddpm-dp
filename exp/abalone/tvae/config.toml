@@ -5,7 +5,7 @@ device = "cuda:0"
 
 [train_params]
 lr = 0.0006509130949439269
-epochs = 30000
+epochs = 300
 embedding_dim = 64 # 128
 batch_size = 128
 loss_factor = 0.8306279147963365
