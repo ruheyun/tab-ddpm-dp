@@ -217,9 +217,8 @@ class TVAESynthesizer(BaseSynthesizer):
         else:
             print('DP Disabled: Standard Training')
 
-        with tqdm(range(self.epochs), desc='Training') as epoch_bar:
+        with tqdm(range(self.epochs), desc='Training', leave=False) as epoch_bar:
             for _ in epoch_bar:
-                # flag = True
                 for data in loader:
                     optimizerAE.zero_grad(set_to_none=True)
                     real = data[0].to(self._device)
@@ -233,9 +232,6 @@ class TVAESynthesizer(BaseSynthesizer):
                     )
                     loss = loss_1 + loss_2
                     loss.backward()
-                    # if self.epsilon is None and flag:
-                    #     print_grad_stats(tvae_module, batch_size=self.batch_size)
-                    #     flag = False
                     optimizerAE.step()
                     if self.epsilon is None:
                         self.decoder.sigma.data.clamp_(0.01, 1.0)
