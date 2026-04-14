@@ -153,7 +153,7 @@ config = {
     "dp": {"epsilon": epsilon, "delta": delta, "max_grad_norm": max_grad_norm}
 }
 
-train_tvae(
+tvae = train_tvae(
     parent_dir=f"exp/{Path(real_data_path).name}/tvae/",
     real_data_path=real_data_path,
     train_params=study.best_trial.user_attrs["train_params"],
@@ -165,6 +165,12 @@ train_tvae(
 )
 
 lib.dump_config(config, config["parent_dir"]+"config.toml")
+
+subprocess.run(['python3.9', "CTGAN/pipeline_tvae.py",
+                '--config', f'{config["parent_dir"]+"config.toml"}',
+                '--train',
+                '--sample',
+               '--eval',], check=True)
 
 # subprocess.run(['python3.9', "scripts/eval_seeds.py", '--config', f'{config["parent_dir"]+"config.toml"}',
 #                 '10', "tvae", eval_type, "catboost", "5"], check=True)
