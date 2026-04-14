@@ -1,5 +1,9 @@
 import tempfile
 import subprocess
+import sys
+import os
+ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.append(ROOT)
 import lib
 import os
 import optuna
