@@ -5,7 +5,6 @@ import os
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.append(ROOT)
 import lib
-import os
 import optuna
 import argparse
 from pathlib import Path
