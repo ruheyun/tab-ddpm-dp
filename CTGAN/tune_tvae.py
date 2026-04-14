@@ -153,16 +153,16 @@ config = {
     "dp": {"epsilon": epsilon, "delta": delta, "max_grad_norm": max_grad_norm}
 }
 
-tvae = train_tvae(
-    parent_dir=f"exp/{Path(real_data_path).name}/tvae/",
-    real_data_path=real_data_path,
-    train_params=study.best_trial.user_attrs["train_params"],
-    change_val=False,
-    device=device,
-    epsilon=epsilon,
-    delta=delta,
-    max_grad_norm=max_grad_norm,
-)
+# tvae = train_tvae(
+#     parent_dir=f"exp/{Path(real_data_path).name}/tvae/",
+#     real_data_path=real_data_path,
+#     train_params=study.best_trial.user_attrs["train_params"],
+#     change_val=False,
+#     device=device,
+#     epsilon=epsilon,
+#     delta=delta,
+#     max_grad_norm=max_grad_norm,
+# )
 
 lib.dump_config(config, config["parent_dir"]+"config.toml")
 
