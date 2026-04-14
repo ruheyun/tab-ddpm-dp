@@ -9,16 +9,25 @@ from train_sample_tvae import train_tvae, sample_tvae
 from scripts.eval_catboost import train_catboost
 
 parser = argparse.ArgumentParser()
-parser.add_argument('data_path', type=str)
-parser.add_argument('train_size', type=int)
-parser.add_argument('eval_type', type=str)
-parser.add_argument('device', type=str)
+parser.add_argument('--data_path', type=str, default='data/adult')
+parser.add_argument('--train_size', type=int, default=26048)
+parser.add_argument('--eval_type', type=str, default='synthetic')
+parser.add_argument('--device', type=str, default='cuda:0')
+parser.add_argument('--epsilon', type=float, default=10)
+parser.add_argument('--delta', type=float, default=1e-5)
+parser.add_argument('--max_grad_norm', type=float, default=1)
+parser.add_argument('--n_trials', type=int, default=50)
+
 
 args = parser.parse_args()
 real_data_path = args.data_path
 eval_type = args.eval_type
 train_size = args.train_size
 device = args.device
+epsilon = args.epsilon
+delta = args.delta
+max_grad_norm = args.max_grad_norm
+n_trials = args.n_trials
 assert eval_type in ('merged', 'synthetic')
 
 
@@ -71,7 +80,10 @@ def objective(trial):
             real_data_path=real_data_path,
             train_params=train_params,
             change_val=True,
-            device=device
+            device=device,
+            epsilon=epsilon,
+            delta=delta,
+            max_grad_norm=max_grad_norm,
         )
 
         for sample_seed in range(5):
@@ -81,7 +93,7 @@ def objective(trial):
                 real_data_path=real_data_path,
                 num_samples=num_samples,
                 train_params=train_params,
-                change_val=True,
+                change_val=False,
                 seed=sample_seed,
                 device=device
             )
@@ -100,7 +112,7 @@ def objective(trial):
                 real_data_path=real_data_path, 
                 eval_type=eval_type,
                 T_dict=T_dict,
-                change_val=True,
+                change_val=False,
                 seed=0
             )
 
@@ -134,7 +146,8 @@ config = {
             "cat_encoding": None,
             "y_policy": "default"
         },
-    }
+    },
+    "dp": {"epsilon": epsilon, "delta": delta, "max_grad_norm": max_grad_norm}
 }
 
 train_tvae(
@@ -142,7 +155,10 @@ train_tvae(
     real_data_path=real_data_path,
     train_params=study.best_trial.user_attrs["train_params"],
     change_val=False,
-    device=device
+    device=device,
+    epsilon=epsilon,
+    delta=delta,
+    max_grad_norm=max_grad_norm,
 )
 
 lib.dump_config(config, config["parent_dir"]+"config.toml")
