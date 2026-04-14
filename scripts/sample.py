@@ -8,6 +8,7 @@ from utils_train import get_model, make_dataset
 from lib import round_columns
 import lib
 
+
 def to_good_ohe(ohe, X):
     indices = np.cumsum([0] + ohe._n_features_outs)
     Xres = []
@@ -17,23 +18,24 @@ def to_good_ohe(ohe, X):
         Xres.append(np.where(t >= 0, 1, 0))
     return np.hstack(Xres)
 
+
 def sample(
     parent_dir,
-    real_data_path = 'data/higgs-small',
-    batch_size = 2000,
-    num_samples = 0,
-    model_type = 'mlp',
-    model_params = None,
-    model_path = None,
-    num_timesteps = 1000,
-    gaussian_loss_type = 'mse',
-    scheduler = 'cosine',
-    T_dict = None,
-    num_numerical_features = 0,
-    disbalance = None,
-    device = torch.device('cuda:1'),
-    seed = 0,
-    change_val = False
+    real_data_path='data/higgs-small',
+    batch_size=2000,
+    num_samples=0,
+    model_type='mlp',
+    model_params=None,
+    model_path=None,
+    num_timesteps=1000,
+    gaussian_loss_type='mse',
+    scheduler='cosine',
+    T_dict=None,
+    num_numerical_features=0,
+    disbalance=None,
+    device=torch.device('cuda:1'),
+    seed=0,
+    change_val=False
 ):
     zero.improve_reproducibility(seed)
 

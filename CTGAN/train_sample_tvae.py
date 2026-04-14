@@ -111,7 +111,7 @@ def sample_tvae(
     y = y.astype(float)
     if lib.load_json(real_data_path / "info.json")["task_type"] != "regression":
         y = y.astype(int)
-    np.save(parent_dir / 'y_train', y) # only clf !!!
+    np.save(parent_dir / 'y_train', y)  # only clf !!!
 
 
 def main():

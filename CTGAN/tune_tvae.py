@@ -113,7 +113,7 @@ study = optuna.create_study(
     sampler=optuna.samplers.TPESampler(seed=0),
 )
 
-study.optimize(objective, n_trials=50, show_progress_bar=True)
+study.optimize(objective, n_trials=10, show_progress_bar=True)
 
 os.makedirs(f"exp/{Path(real_data_path).name}/tvae/", exist_ok=True)
 config = {
@@ -147,5 +147,5 @@ train_tvae(
 
 lib.dump_config(config, config["parent_dir"]+"config.toml")
 
-subprocess.run(['python3.9', "scripts/eval_seeds.py", '--config', f'{config["parent_dir"]+"config.toml"}',
-                '10', "tvae", eval_type, "catboost", "5"], check=True)
+# subprocess.run(['python3.9', "scripts/eval_seeds.py", '--config', f'{config["parent_dir"]+"config.toml"}',
+#                 '10', "tvae", eval_type, "catboost", "5"], check=True)

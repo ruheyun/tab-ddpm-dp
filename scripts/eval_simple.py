@@ -12,16 +12,17 @@ from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor
 from sklearn.linear_model import LogisticRegression, Ridge
 from sklearn.neural_network import MLPClassifier, MLPRegressor
 
+
 def train_simple(
     parent_dir,
     real_data_path,
     eval_type,
     T_dict,
-    model_name = "tree",
-    seed = 0,
-    change_val = True,
-    params = None, # dummy
-    device = None # dummy
+    model_name="tree",
+    seed=0,
+    change_val=True,
+    params=None,  # dummy
+    device=None  # dummy
 ):
     zero.improve_reproducibility(seed)
     if eval_type != "real":
@@ -87,9 +88,6 @@ def train_simple(
 
     D = lib.transform_dataset(D, T, None)
     X = concat_features(D)
-    # ixs = np.random.choice(len(D.y["train"]), min(info["train_size"], len(D.y["train"])), replace=False)
-    # X["train"] = X["train"].iloc[ixs]
-    # D.y["train"] = D.y["train"][ixs]
 
     print(f'Train size: {X["train"].shape}, Val size {X["val"].shape}')
     print(T_dict)
