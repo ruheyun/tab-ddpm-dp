@@ -32,6 +32,7 @@ delta = args.delta
 max_grad_norm = args.max_grad_norm
 n_trials = args.n_trials
 assert eval_type in ('merged', 'synthetic')
+best_seed = 0
 
 
 def objective(trial):
@@ -118,9 +119,11 @@ def objective(trial):
                 change_val=False,
                 seed=0
             )
-
-            score += metrics.get_val_score()
-    return score / 5
+            if score <= metrics.get_dp_score():
+                score = metrics.get_dp_score()
+                best_seed = sample_seed
+            # score += metrics.get_dp_score()
+    return score
 
 
 study = optuna.create_study(
@@ -137,7 +140,7 @@ config = {
     "seed": 0,
     "device": args.device,
     "train_params": study.best_trial.user_attrs["train_params"],
-    "sample": {"seed": 0, "num_samples": study.best_trial.user_attrs["num_samples"]},
+    "sample": {"seed": best_seed, "num_samples": study.best_trial.user_attrs["num_samples"]},
     "eval": {
         "type": {"eval_model": "catboost", "eval_type": eval_type},
         "T": {

@@ -45,7 +45,10 @@ class MetricsReport:
 
     def get_val_score(self) -> float:
         return self._res["val"]["r2"] if "r2" in self._res["val"] else self._res["val"]["f1"]
-    
+
+    def get_dp_score(self) -> float:
+        return self._res["val"]["r2"] if "r2" in self._res["val"] else self._res["val"]["roc_auc"]
+
     def get_test_score(self) -> float:
         return self._res["test"]["r2"] if "r2" in self._res["test"] else self._res["test"]["f1"]
     
