@@ -36,6 +36,7 @@ best_seed = 0
 
 
 def objective(trial):
+    global best_seed
     
     lr = trial.suggest_loguniform('lr', 0.00001, 0.003)
 
