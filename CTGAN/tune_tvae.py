@@ -58,7 +58,7 @@ def objective(trial):
     ####
 
     steps = trial.suggest_categorical('steps', [50, 100, 300, 500])
-    batch_size = trial.suggest_categorical('batch_size', [128, 256, 512])
+    batch_size = trial.suggest_categorical('batch_size', [64, 128, 256])
 
     num_samples = int(train_size * (2 ** trial.suggest_int('frac_samples', -1, 2)))
     embedding_dim = 2 ** trial.suggest_int('embedding_dim', 6, 9)
@@ -170,7 +170,8 @@ config = {
 
 lib.dump_config(config, config["parent_dir"]+"config.toml")
 
-subprocess.run(['python3.9', "CTGAN/pipeline_tvae.py",
+python_exec = sys.executable
+subprocess.run([python_exec, "CTGAN/pipeline_tvae.py",
                 '--config', f'{config["parent_dir"]+"config.toml"}',
                 '--train',
                 '--sample',
