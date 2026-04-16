@@ -181,7 +181,7 @@ def num_process_nans(dataset: Dataset, policy: Optional[NumNanPolicy]) -> Datase
         return dataset
 
     if policy is None:
-        policy = 'drop-rows'
+        policy = 'mean'
 
     assert policy is not None
     if policy == 'drop-rows':
