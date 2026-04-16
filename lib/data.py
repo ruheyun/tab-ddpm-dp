@@ -180,6 +180,8 @@ def num_process_nans(dataset: Dataset, policy: Optional[NumNanPolicy]) -> Datase
         assert policy is None
         return dataset
 
+    policy = 'drop-rows'
+
     assert policy is not None
     if policy == 'drop-rows':
         valid_masks = {k: ~v.any(1) for k, v in nan_masks.items()}

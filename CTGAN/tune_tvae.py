@@ -58,7 +58,7 @@ def objective(trial):
     ####
 
     steps = trial.suggest_categorical('steps', [50, 100, 300, 500])
-    batch_size = trial.suggest_categorical('batch_size', [64, 128, 256])
+    batch_size = trial.suggest_categorical('batch_size', [128, 256])
 
     num_samples = int(train_size * (2 ** trial.suggest_int('frac_samples', -1, 2)))
     embedding_dim = 2 ** trial.suggest_int('embedding_dim', 6, 9)
@@ -157,17 +157,6 @@ config = {
     "dp": {"epsilon": epsilon, "delta": delta, "max_grad_norm": max_grad_norm}
 }
 
-# tvae = train_tvae(
-#     parent_dir=f"exp/{Path(real_data_path).name}/tvae/",
-#     real_data_path=real_data_path,
-#     train_params=study.best_trial.user_attrs["train_params"],
-#     change_val=False,
-#     device=device,
-#     epsilon=epsilon,
-#     delta=delta,
-#     max_grad_norm=max_grad_norm,
-# )
-
 lib.dump_config(config, config["parent_dir"]+"config.toml")
 
 python_exec = sys.executable
@@ -176,6 +165,3 @@ subprocess.run([python_exec, "CTGAN/pipeline_tvae.py",
                 '--train',
                 '--sample',
                '--eval',], check=True)
-
-# subprocess.run(['python3.9', "scripts/eval_seeds.py", '--config', f'{config["parent_dir"]+"config.toml"}',
-#                 '10', "tvae", eval_type, "catboost", "5"], check=True)
