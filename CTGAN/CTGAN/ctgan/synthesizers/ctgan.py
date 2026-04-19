@@ -8,6 +8,8 @@ import torch
 from packaging import version
 from torch import optim
 from torch.nn import BatchNorm1d, Dropout, LeakyReLU, Linear, Module, ReLU, Sequential, functional
+from opacus import PrivacyEngine
+from torch.utils.data import DataLoader, TensorDataset
 
 from ..data_sampler import DataSampler
 from ..data_transformer import DataTransformer
@@ -140,10 +142,26 @@ class CTGANSynthesizer(BaseSynthesizer):
             Defaults to ``True``.
     """
 
-    def __init__(self, embedding_dim=128, generator_dim=(256, 256), discriminator_dim=(256, 256),
-                 generator_lr=2e-4, generator_decay=1e-6, discriminator_lr=2e-4,
-                 discriminator_decay=1e-6, batch_size=500, discriminator_steps=1,
-                 log_frequency=True, verbose=False, epochs=300, pac=10, cuda=True):
+    def __init__(
+        self,
+        embedding_dim=128,
+        generator_dim=(256, 256),
+        discriminator_dim=(256, 256),
+        generator_lr=2e-4,
+        generator_decay=1e-6,
+        discriminator_lr=2e-4,
+        discriminator_decay=1e-6,
+        batch_size=500,
+        discriminator_steps=1,
+        log_frequency=True,
+        verbose=False,
+        epochs=300,
+        pac=1,
+        epsilon=10,
+        delta=1e-5,
+        max_grad_norm=1.0,
+        cuda=True
+    ):
 
         assert batch_size % 2 == 0
 
@@ -162,6 +180,10 @@ class CTGANSynthesizer(BaseSynthesizer):
         self._verbose = verbose
         self._epochs = epochs
         self.pac = pac
+
+        self.epsilon = epsilon
+        self.delta = delta
+        self.max_grad_norm = max_grad_norm
 
         if not cuda or not torch.cuda.is_available():
             device = 'cpu'
@@ -312,6 +334,14 @@ class CTGANSynthesizer(BaseSynthesizer):
             self._transformer.output_info_list,
             self._log_frequency)
 
+        dataset = TensorDataset(torch.from_numpy(train_data.astype('float32')))
+        data_loader = DataLoader(
+            dataset,
+            batch_size=self._batch_size,
+            shuffle=True,
+            drop_last=True
+        )
+
         data_dim = self._transformer.output_dimensions
 
         self._generator = Generator(
@@ -336,11 +366,23 @@ class CTGANSynthesizer(BaseSynthesizer):
             betas=(0.5, 0.9), weight_decay=self._discriminator_decay
         )
 
+        privacy_engine = PrivacyEngine()  # ycz
+        steps = epochs * self._discriminator_steps
+        discriminator, optimizerD, data_loader = privacy_engine.make_private_with_epsilon(
+            module=discriminator,
+            optimizer=optimizerD,
+            data_loader=data_loader,
+            target_epsilon=self.epsilon,
+            target_delta=self.delta,
+            max_grad_norm=self.max_grad_norm,
+            steps=steps,
+        )
+
         mean = torch.zeros(self._batch_size, self._embedding_dim, device=self._device)
         std = mean + 1
 
         print('CTGAN training')
-        steps_per_epoch = max(len(train_data) // self._batch_size, 1)
+        # steps_per_epoch = max(len(train_data) // self._batch_size, 1)  # ycz
         for i in range(epochs):
             for n in range(self._discriminator_steps):
                 fakez = torch.normal(mean=mean, std=std)
@@ -376,12 +418,12 @@ class CTGANSynthesizer(BaseSynthesizer):
                 y_fake = discriminator(fake_cat)
                 y_real = discriminator(real_cat)
 
-                pen = discriminator.calc_gradient_penalty(
-                    real_cat, fake_cat, self._device, self.pac)
+                # pen = discriminator.calc_gradient_penalty(
+                #     real_cat, fake_cat, self._device, self.pac)  # ycz
                 loss_d = -(torch.mean(y_real) - torch.mean(y_fake))
 
                 optimizerD.zero_grad()
-                pen.backward(retain_graph=True)
+                # pen.backward(retain_graph=True)  # ycz
                 loss_d.backward()
                 optimizerD.step()
 

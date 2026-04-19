@@ -1,21 +1,21 @@
-parent_dir = "exp/adult/tvae"
+parent_dir = "exp/adult/ctgan"
 real_data_path = "data/adult/"
 seed = 0
 device = "cuda:0"
 
 [train_params]
-lr = 0.00032660626928874973
+generator_lr = 2e-4
+discriminator_lr = 2e-4
 epochs = 200
-embedding_dim = 128 # 512
+embedding_dim = 128
 batch_size = 256
-loss_factor = 1.1675626917524105
-compress_dims = [
+generator_dims = [
     256,
-    512,
+    256,
 ]
-decompress_dims = [
+discriminator_dims = [
     256,
-    512,
+    256,
 ]
 
 [sample]

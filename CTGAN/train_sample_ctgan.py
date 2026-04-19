@@ -1,6 +1,6 @@
 import numpy as np
 import argparse
-from CTGAN.ctgan import TVAESynthesizer
+from CTGAN.ctgan import CTGANSynthesizer
 from pathlib import Path
 import torch
 import pickle
@@ -15,7 +15,7 @@ import lib
 warnings.filterwarnings("ignore", category=ConvergenceWarning)
 
 
-def train_tvae(
+def train_ctgan(
     parent_dir,
     real_data_path,
     train_params={"batch_size": 512},
@@ -45,23 +45,23 @@ def train_tvae(
     train_params["batch_size"] = min(y_train.shape[0], train_params["batch_size"])
 
     print(train_params)
-    synthesizer = TVAESynthesizer(
-                    **train_params,
-                    device=device,
-                    epsilon=epsilon,
-                    delta=delta,
-                    max_grad_norm=max_grad_norm
-                )
 
+    synthesizer = CTGANSynthesizer(
+        **train_params,
+        epsilon=epsilon,
+        delta=delta,
+        max_grad_norm=max_grad_norm
+    )
+    
     synthesizer.fit(X, cat_features)
 
-    with open(parent_dir / "tvae.obj", "wb") as f:
+    with open(parent_dir / "ctgan.obj", "wb") as f:
         pickle.dump(synthesizer, f)
 
     return synthesizer
 
 
-def sample_tvae(
+def sample_ctgan(
     synthesizer,
     parent_dir,
     real_data_path,
@@ -88,11 +88,11 @@ def sample_tvae(
     if lib.load_json(real_data_path / "info.json")["task_type"] != "regression":
         cat_features += ["y"]
 
-    with open(parent_dir / "tvae.obj", 'rb') as f:
+    with open(parent_dir / "ctgan.obj", 'rb') as f:
         synthesizer = pickle.load(f)
-        synthesizer.decoder = synthesizer.decoder.to(device)
+        synthesizer._generator = synthesizer._generator.to(device)
 
-    gen_data = synthesizer.sample(num_samples, seed)
+    gen_data = synthesizer.sample(num_samples)
 
     y = gen_data['y'].values
     if len(np.unique(y)) == 1:
@@ -119,8 +119,8 @@ def main():
     parser.add_argument('train_size', type=int)
     args = parser.parse_args()
 
-    ctabgan = train_tvae(args.parent_dir, args.real_data_path, change_val=True)
-    sample_tvae(ctabgan, args.parent_dir, args.real_data_path, args.train_size, change_val=True)
+    ctgan = train_ctgan(args.parent_dir, args.real_data_path, change_val=True)
+    sample_ctgan(ctgan, args.parent_dir, args.real_data_path, args.train_size, change_val=True)
 
 
 if __name__ == '__main__':
