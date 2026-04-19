@@ -368,10 +368,6 @@ class CTGANSynthesizer(BaseSynthesizer):
 
         privacy_engine = PrivacyEngine()  # ycz
         steps = epochs * self._discriminator_steps
-        dataset_size = len(train_data)
-        steps_per_epoch_opacus = dataset_size / self._batch_size
-        real_steps = epochs * self._discriminator_steps
-        effective_epochs = real_steps / steps_per_epoch_opacus
         discriminator, optimizerD, data_loader = privacy_engine.make_private_with_epsilon(
             module=discriminator,
             optimizer=optimizerD,
@@ -379,8 +375,8 @@ class CTGANSynthesizer(BaseSynthesizer):
             target_epsilon=self.epsilon,
             target_delta=self.delta,
             max_grad_norm=self.max_grad_norm,
-            epochs=None,
-            steps=steps
+            epochs=epochs,
+            # steps=steps
         )
 
         mean = torch.zeros(self._batch_size, self._embedding_dim, device=self._device)
