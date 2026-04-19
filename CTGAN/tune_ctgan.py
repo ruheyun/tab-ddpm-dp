@@ -69,8 +69,8 @@ def objective(trial):
         "epochs": steps,
         "embedding_dim": embedding_dim,
         "batch_size": batch_size,
-        "generator_dims": d_layers,
-        "discriminator_dims": d_layers
+        "generator_dim": d_layers,
+        "discriminator_dim": d_layers
     }
 
     trial.set_user_attr("train_params", train_params)
