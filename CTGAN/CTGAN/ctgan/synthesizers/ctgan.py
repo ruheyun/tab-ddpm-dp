@@ -376,6 +376,7 @@ class CTGANSynthesizer(BaseSynthesizer):
             target_delta=self.delta,
             max_grad_norm=self.max_grad_norm,
             epochs=epochs,
+            poisson_sampling=False
             # steps=steps
         )
 
