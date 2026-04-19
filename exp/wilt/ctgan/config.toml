@@ -1,0 +1,41 @@
+parent_dir = "exp/wilt/ctgan"
+real_data_path = "data/wilt/"
+seed = 0
+device = "cuda:0"
+
+[train_params]
+generator_lr = 2e-4
+discriminator_lr = 2e-4
+epochs = 200
+embedding_dim = 128
+batch_size = 256
+generator_dims = [
+    256,
+    256,
+]
+discriminator_dims = [
+    256,
+    256,
+]
+
+[sample]
+seed = 0
+num_samples = 52096
+
+[eval.type]
+eval_model = "catboost"
+eval_type = "synthetic"
+
+[eval.T]
+seed = 0
+normalization = "__none__"
+num_nan_policy = "__none__"
+cat_nan_policy = "__none__"
+cat_min_frequency = "__none__"
+cat_encoding = "__none__"
+y_policy = "default"
+
+[dp]
+epsilon = "__none__" # 10  5  1
+delta = 1e-5
+max_grad_norm = 1
