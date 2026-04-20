@@ -42,6 +42,7 @@ eval_seeds = f'scripts/eval_seeds.py'
 
 os.makedirs(exps_path, exist_ok=True)
 best_seed = 0
+python_exec = sys.executable
 
 
 def _suggest_mlp_layers(trial):
@@ -98,7 +99,7 @@ def objective(trial):
 
     lib.dump_config(base_config, exps_path / 'config.toml')
 
-    subprocess.run(['python3.9', f'{pipeline}', '--config', f'{exps_path / "config.toml"}', '--train', '--change_val'], check=True)
+    subprocess.run([python_exec, f'{pipeline}', '--config', f'{exps_path / "config.toml"}', '--train', '--change_val'], check=True)
 
     n_datasets = 5
     score = float('-inf')
@@ -107,7 +108,7 @@ def objective(trial):
         base_config['sample']['seed'] = sample_seed
         lib.dump_config(base_config, exps_path / 'config.toml')
         
-        subprocess.run(['python3.9', f'{pipeline}', '--config', f'{exps_path / "config.toml"}', '--sample', '--eval', '--change_val'], check=True)
+        subprocess.run([python_exec, f'{pipeline}', '--config', f'{exps_path / "config.toml"}', '--sample', '--eval', '--change_val'], check=True)
 
         report_path = str(Path(base_config['parent_dir']) / f'results_{args.eval_model}.json')
         report = lib.load_json(report_path)
@@ -144,8 +145,8 @@ os.makedirs(parent_path / f'{prefix}_best', exist_ok=True)
 lib.dump_config(best_config, best_config_path)
 lib.dump_json(optuna.importance.get_param_importances(study), parent_path / f'{prefix}_best/importance.json')
 
-subprocess.run(['python3.9', f'{pipeline}', '--config', f'{best_config_path}', '--train', '--sample', '--eval'], check=True)
+subprocess.run([python_exec, f'{pipeline}', '--config', f'{best_config_path}', '--train', '--sample', '--eval'], check=True)
 
 if args.eval_seeds:
     best_exp = str(parent_path / f'{prefix}_best/config.toml')
-    subprocess.run(['python3.9', f'{eval_seeds}', '--config', f'{best_exp}', '10', "ddpm", eval_type, args.eval_model, '5'], check=True)
+    subprocess.run([python_exec, f'{eval_seeds}', '--config', f'{best_exp}', '10', "ddpm", eval_type, args.eval_model, '5'], check=True)
