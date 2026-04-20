@@ -14,7 +14,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument('--ds_name', type=str, default='wilt')
 parser.add_argument('--train_size', type=int, default=3096)
 parser.add_argument('--eval_type', type=str, default='synthetic')
-parser.add_argument('--eval_model', type=str, default='catboost')
+parser.add_argument('--eval_model', type=str, default='cb')
 parser.add_argument('--prefix', type=str, default='ddpm')
 parser.add_argument('--eval_seeds', action='store_true',  default=False)
 parser.add_argument('--epsilon', type=float, default=10)
@@ -99,7 +99,7 @@ def objective(trial):
 
     lib.dump_config(base_config, exps_path / 'config.toml')
 
-    subprocess.run([python_exec, f'{pipeline}', '--config', f'{exps_path / "config.toml"}', '--train', '--change_val'], check=True)
+    subprocess.run([python_exec, f'{pipeline}', '--config', f'{exps_path / "config.toml"}', '--train'], check=True)
 
     n_datasets = 5
     score = float('-inf')
