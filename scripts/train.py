@@ -33,9 +33,9 @@ class Trainer:
             weight_decay,
             steps,
             delta,
-            noise_multiplier,
+            epsilon,
             max_grad_norm,
-            device=torch.device('cuda:1'),
+            device=torch.device('cuda:0'),
     ):
         self.diffusion = diffusion
         self.ema_model = deepcopy(self.diffusion._denoise_fn)
@@ -53,15 +53,18 @@ class Trainer:
         self.ema_every = 1000
 
         self.delta = delta
-        self.noise_multiplier = noise_multiplier
+        self.epsilon = epsilon
         self.max_grad_norm = max_grad_norm
         self.privacy_engine = PrivacyEngine()
-        self.diffusion, self.optimizer, self.train_iter = self.privacy_engine.make_private(
+        self.diffusion, self.optimizer, self.train_iter = self.privacy_engine.make_private_with_epsilon(
             module=self.diffusion,
             optimizer=self.optimizer,
             data_loader=self.train_iter,
-            noise_multiplier=self.noise_multiplier,
-            max_grad_norm=self.max_grad_norm
+            epochs=None,
+            target_epsilon=self.epsilon,
+            target_delta=self.delta,
+            max_grad_norm=self.max_grad_norm,
+            steps=self.steps
         )
 
     def _anneal_lr(self, step):
@@ -89,31 +92,33 @@ class Trainer:
 
         curr_count = 0
         while step < self.steps:
-            x, out_dict = next(self.train_iter)
-            out_dict = {'y': out_dict}
-            batch_loss_multi, batch_loss_gauss = self._run_step(x, out_dict)
+            for x, out_dict in self.train_iter:
+                out_dict = {'y': out_dict}
+                batch_loss_multi, batch_loss_gauss = self._run_step(x, out_dict)
 
-            self._anneal_lr(step)
+                self._anneal_lr(step)
 
-            curr_count += len(x)
-            curr_loss_multi += batch_loss_multi.item() * len(x)
-            curr_loss_gauss += batch_loss_gauss.item() * len(x)
+                curr_count += len(x)
+                curr_loss_multi += batch_loss_multi.item() * len(x)
+                curr_loss_gauss += batch_loss_gauss.item() * len(x)
 
-            if (step + 1) % self.log_every == 0:
-                mloss = np.around(curr_loss_multi / curr_count, 4)
-                gloss = np.around(curr_loss_gauss / curr_count, 4)
-                if (step + 1) % self.print_every == 0:
-                    epsilon = self.privacy_engine.get_epsilon(delta=self.delta)
-                    print(f'Step {(step + 1)}/{self.steps} MLoss: {mloss} GLoss: {gloss} Sum: {mloss + gloss} '
-                          f'Epsilon: {epsilon: .4f}')
-                self.loss_history.loc[len(self.loss_history)] = [step + 1, mloss, gloss, mloss + gloss]
-                curr_count = 0
-                curr_loss_gauss = 0.0
-                curr_loss_multi = 0.0
+                if (step + 1) % self.log_every == 0:
+                    mloss = np.around(curr_loss_multi / curr_count, 4)
+                    gloss = np.around(curr_loss_gauss / curr_count, 4)
+                    if (step + 1) % self.print_every == 0:
+                        epsilon = self.privacy_engine.get_epsilon(delta=self.delta)
+                        print(f'Step {(step + 1)}/{self.steps} MLoss: {mloss} GLoss: {gloss} Sum: {mloss + gloss} '
+                              f'Epsilon: {epsilon: .4f}')
+                    self.loss_history.loc[len(self.loss_history)] = [step + 1, mloss, gloss, mloss + gloss]
+                    curr_count = 0
+                    curr_loss_gauss = 0.0
+                    curr_loss_multi = 0.0
 
-            update_ema(self.ema_model.parameters(), self.diffusion._denoise_fn.parameters())
+                update_ema(self.ema_model.parameters(), self.diffusion._denoise_fn.parameters())
 
-            step += 1
+                step += 1
+                if step >= self.steps:
+                    break
 
 
 def train(
@@ -129,12 +134,12 @@ def train(
     gaussian_loss_type='mse',
     scheduler='cosine',
     T_dict=None,
-    device=torch.device('cuda:1'),
+    device=torch.device('cuda:0'),
     seed=0,
     change_val=False,
-    delta=10.,
-    noise_multiplier=1.,
-    max_grad_norm=0.2,
+    delta=1e-5,
+    epsilon=10,
+    max_grad_norm=1,
 ):
     real_data_path = os.path.normpath(real_data_path)
     parent_dir = os.path.normpath(parent_dir)
@@ -192,7 +197,7 @@ def train(
         steps=steps,
         device=device,
         delta=delta,
-        noise_multiplier=noise_multiplier,
+        epsilon=epsilon,
         max_grad_norm=max_grad_norm,
     )
     trainer.run_loop()

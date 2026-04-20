@@ -27,10 +27,10 @@ num_timesteps = 100
 gaussian_loss_type = "mse"
 
 [train.main]
-steps = 30000
+steps = 5000
 lr = 0.00010707356429215857
 weight_decay = 0.0
-batch_size = 256
+batch_size = 128
 
 [train.T]
 seed = 0
@@ -43,7 +43,7 @@ y_policy = "default"
 
 [sample]
 num_samples = 24800
-batch_size = 10000
+batch_size = 256
 seed = 0
 
 [eval.type]
@@ -58,3 +58,8 @@ cat_nan_policy = "__none__"
 cat_min_frequency = "__none__"
 cat_encoding = "__none__"
 y_policy = "default"
+
+[dp]
+epsilon = "__none__" # 10  5  1
+delta = 1e-5
+max_grad_norm = 1

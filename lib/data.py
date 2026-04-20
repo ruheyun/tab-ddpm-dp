@@ -17,7 +17,7 @@ from category_encoders import LeaveOneOutEncoder
 from sklearn.impute import SimpleImputer
 from sklearn.preprocessing import StandardScaler
 from scipy.spatial.distance import cdist
-from torch.utils.data import DataLoader, Dataset
+from torch.utils.data import DataLoader, Dataset, TensorDataset
 
 from . import env, util
 from .metrics import calculate_metrics as calculate_metrics_

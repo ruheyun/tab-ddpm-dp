@@ -39,7 +39,7 @@ def main():
     if 'device' in raw_config:
         device = torch.device(raw_config['device'])
     else:
-        device = torch.device('cuda:1')
+        device = torch.device('cuda:0')
     
     timer = zero.Timer()
     timer.run()
@@ -57,7 +57,7 @@ def main():
             device=device,
             change_val=args.change_val,
             delta=raw_config['dp']['delta'],
-            noise_multiplier=raw_config['dp']['moise_multiplier'],
+            epsilon=raw_config['dp']['epsilon'],
             max_grad_norm=raw_config['dp']['max_grad_norm'],
         )
     if args.sample:
