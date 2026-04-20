@@ -41,7 +41,6 @@ exps_path = Path(f'exp/{ds_name}/many-exps/')  # temporary dir. maybe will be re
 eval_seeds = f'scripts/eval_seeds.py'
 
 os.makedirs(exps_path, exist_ok=True)
-best_seed = 0
 python_exec = sys.executable
 
 
@@ -63,8 +62,7 @@ def _suggest_mlp_layers(trial):
 
 
 def objective(trial):
-    global best_seed
-    
+
     lr = trial.suggest_loguniform('lr', 0.00001, 0.003)
     d_layers = _suggest_mlp_layers(trial)
     weight_decay = 0.0    
@@ -117,20 +115,15 @@ def objective(trial):
         report = lib.load_json(report_path)
 
         if 'r2' in report['metrics']['val']:
-            if score <= report['metrics']['val']['r2']:
-                score = report['metrics']['val']['r2']
-                best_seed = sample_seed
+            score += report['metrics']['val']['r2']
         else:
-            if score <= report['metrics']['val']['roc_auc']:
-                score = report['metrics']['val']['roc_auc']
-                best_seed = sample_seed
+            score += report['metrics']['val']['roc_auc']
 
-    base_config['sample']['seed'] = best_seed
     trial.set_user_attr("config", base_config)
 
     shutil.rmtree(exps_path / f"{trial.number}")
 
-    return score
+    return score / n_datasets
 
 
 study = optuna.create_study(
