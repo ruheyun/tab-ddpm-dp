@@ -1,11 +1,14 @@
 import subprocess
-import lib
-import os
 import optuna
-from copy import deepcopy
 import shutil
 import argparse
 from pathlib import Path
+import sys
+import os
+ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.append(ROOT)
+import lib  # noqa
+
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--ds_name', type=str, default='wilt')
