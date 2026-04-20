@@ -66,6 +66,7 @@ class Trainer:
             max_grad_norm=self.max_grad_norm,
             steps=self.steps
         )
+        self.diffusion.mixed_loss = self.diffusion._module.mixed_loss
 
     def _anneal_lr(self, step):
         frac_done = step / self.steps
