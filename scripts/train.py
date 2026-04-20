@@ -60,9 +60,9 @@ class Trainer:
             module=self.diffusion,
             optimizer=self.optimizer,
             data_loader=self.train_iter,
-            epochs=None,
             target_epsilon=self.epsilon,
             target_delta=self.delta,
+            epochs=None,
             max_grad_norm=self.max_grad_norm,
             steps=self.steps
         )
