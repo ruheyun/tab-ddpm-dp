@@ -37,7 +37,7 @@ prefix = str(args.prefix + '_' + eval_model)
 pipeline = f'scripts/pipeline.py'
 base_config_path = f'exp/{ds_name}/config.toml'
 parent_path = Path(f'exp/{ds_name}/')
-exps_path = Path(f'exp/{ds_name}/many-exps/') # temporary dir. maybe will be replaced with tempdiвdr
+exps_path = Path(f'exp/{ds_name}/many-exps/')  # temporary dir. maybe will be replaced with tempdiвdr
 eval_seeds = f'scripts/eval_seeds.py'
 
 os.makedirs(exps_path, exist_ok=True)
@@ -49,7 +49,7 @@ def _suggest_mlp_layers(trial):
     def suggest_dim(name):
         t = trial.suggest_int(name, d_min, d_max)
         return 2 ** t
-    min_n_layers, max_n_layers, d_min, d_max = 1, 4, 7, 10
+    min_n_layers, max_n_layers, d_min, d_max = 1, 2, 6, 10
     n_layers = 2 * trial.suggest_int('n_layers', min_n_layers, max_n_layers)
     d_first = [suggest_dim('d_first')] if n_layers else []
     d_middle = (
@@ -96,6 +96,9 @@ def objective(trial):
         base_config['eval']['T']['cat_encoding'] = "one-hot"
 
     # trial.set_user_attr("config", base_config)
+    base_config['dp']['delta'] = delta
+    base_config['dp']['epsilon'] = epsilon
+    base_config['dp']['max_grad_norm'] = max_grad_norm
 
     lib.dump_config(base_config, exps_path / 'config.toml')
 
