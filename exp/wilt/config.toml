@@ -22,10 +22,10 @@ gaussian_loss_type = "mse"
 scheduler = "cosine"
 
 [train.main]
-steps = 1000
+steps = 5000
 lr = 0.001
 weight_decay = 1e-05
-batch_size = 4096
+batch_size = 128
 
 [train.T]
 seed = 0
@@ -38,7 +38,7 @@ y_policy = "default"
 
 [sample]
 num_samples = 24800
-batch_size = 10000
+batch_size = 256
 seed = 0
 
 [eval.type]
