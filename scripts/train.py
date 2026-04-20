@@ -32,9 +32,9 @@ class Trainer:
             lr,
             weight_decay,
             steps,
-            delta,
-            epsilon,
-            max_grad_norm,
+            delta=1e-5,
+            epsilon=10,
+            max_grad_norm=1,
             device=torch.device('cuda:0'),
     ):
         self.diffusion = diffusion
