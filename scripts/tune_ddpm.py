@@ -103,7 +103,7 @@ def objective(trial):
     subprocess.run([python_exec, f'{pipeline}', '--config', f'{exps_path / "config.toml"}', '--train'], check=True)
 
     n_datasets = 5
-    score = float('-inf')
+    score = 0.0
 
     for sample_seed in range(n_datasets):
         base_config['sample']['seed'] = sample_seed
