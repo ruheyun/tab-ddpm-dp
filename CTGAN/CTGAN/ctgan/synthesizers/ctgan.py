@@ -389,7 +389,7 @@ class CTGANSynthesizer(BaseSynthesizer):
                 real_data = batch_data[0].to(self._device)
                 batch_size = real_data.shape[0]
 
-                condvec = self._data_sampler.sample_condvec(self._batch_size)
+                condvec = self._data_sampler.sample_condvec(batch_size)
                 if condvec is None:
                     c1, m1 = None, None
                 else:
@@ -432,7 +432,7 @@ class CTGANSynthesizer(BaseSynthesizer):
                 optimizerD.step()
 
                 fakez = torch.normal(mean=mean, std=std)
-                condvec = self._data_sampler.sample_condvec(self._batch_size)
+                condvec = self._data_sampler.sample_condvec(batch_size)
 
                 if condvec is None:
                     c1, m1, col, opt = None, None, None, None
