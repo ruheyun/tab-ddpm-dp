@@ -14,6 +14,7 @@ from torch.utils.data import DataLoader, TensorDataset
 from ..data_sampler import DataSampler
 from ..data_transformer import DataTransformer
 from .base import BaseSynthesizer, random_state
+from ..dp_data_transformer import DPDataTransformer
 
 
 class Discriminator(Module):
@@ -324,7 +325,7 @@ class CTGANSynthesizer(BaseSynthesizer):
                 DeprecationWarning
             )
 
-        self._transformer = DataTransformer()
+        self._transformer = DPDataTransformer()
         self._transformer.fit(train_data, discrete_columns)
 
         train_data = self._transformer.transform(train_data)
@@ -366,7 +367,7 @@ class CTGANSynthesizer(BaseSynthesizer):
             betas=(0.5, 0.9), weight_decay=self._discriminator_decay
         )
 
-        privacy_engine = PrivacyEngine()  # ycz
+        privacy_engine = PrivacyEngine()
         steps = epochs * self._discriminator_steps
         discriminator, optimizerD, data_loader = privacy_engine.make_private_with_epsilon(
             module=discriminator,

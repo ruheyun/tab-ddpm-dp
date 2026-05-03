@@ -111,21 +111,6 @@ def _loss_function(recon_x, x, sigmas, mu, logvar, output_info, factor):
     return sum(loss) * factor / x.size()[0], KLD / x.size()[0]
 
 
-def print_grad_stats(model, batch_size, name="before opacus"):
-    grads = []
-    for param in model.parameters():
-        if param.grad is not None:
-            grads.append(param.grad.view(-1))
-    if grads:
-        grads = torch.cat(grads)
-        estimated_per_sample_norm = grads.norm() / (batch_size ** 0.5)
-        print(f'[{name}] Gradients - Mean: {grads.mean().item(): .6f}, '
-              f'Std: {grads.std().item(): .6f}, '
-              f'Max: {grads.max().item(): .6f}, Min: {grads.min().item(): .6f} '
-              f'Estimated: {estimated_per_sample_norm}'
-        )
-
-
 class TVAESynthesizer(BaseSynthesizer):
     """TVAESynthesizer."""
 
