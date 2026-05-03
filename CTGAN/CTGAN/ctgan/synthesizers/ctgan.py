@@ -156,7 +156,7 @@ class CTGANSynthesizer(BaseSynthesizer):
         batch_size=500,
         discriminator_steps=1,
         log_frequency=True,
-        verbose=False,
+        verbose=True,
         epochs=300,
         pac=1,
         epsilon=10,

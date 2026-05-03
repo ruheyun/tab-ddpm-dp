@@ -20,7 +20,7 @@ discriminator_dim = [
 
 [sample]
 seed = 0
-num_samples = 52096
+num_samples = 3096
 
 [eval.type]
 eval_model = "catboost"
