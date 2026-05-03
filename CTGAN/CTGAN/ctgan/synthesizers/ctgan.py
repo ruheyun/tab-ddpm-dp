@@ -382,68 +382,156 @@ class CTGANSynthesizer(BaseSynthesizer):
         # std = mean + 1
 
         print('CTGAN training')
-        for i in range(epochs):
+        # for i in range(epochs):
+        #     for batch_data in data_loader:
+        #         real_data = batch_data[0].to(self._device)
+        #         batch_size = real_data.shape[0]
+        #
+        #         c1, _, _, _ = self._data_sampler.sample_condvec(batch_size)
+        #         c1 = torch.from_numpy(c1).to(self._device)
+        #
+        #         fakez = torch.normal(mean=0.0, std=1.0, size=(batch_size, self._embedding_dim), device=self._device)
+        #         fakez = torch.cat([fakez, c1], dim=1)
+        #
+        #         # perm = np.arange(self._batch_size)
+        #         # np.random.shuffle(perm)
+        #         # real = self._data_sampler.sample_data(
+        #         #     self._batch_size, col[perm], opt[perm])
+        #         # c2 = c1[perm]
+        #
+        #         fake = self._generator(fakez)
+        #         fakeact = self._apply_activate(fake)
+        #
+        #         # real = torch.from_numpy(real.astype('float32')).to(self._device)
+        #
+        #         fake_cat = torch.cat([fakeact, c1], dim=1)
+        #         real_cat = torch.cat([real_data, c1], dim=1)
+        #
+        #         y_fake = discriminator(fake_cat)
+        #         y_real = discriminator(real_cat)
+        #
+        #         # pen = discriminator.calc_gradient_penalty(
+        #         #     real_cat, fake_cat, self._device, self.pac)  # ycz
+        #         loss_d = -(torch.mean(y_real) - torch.mean(y_fake))
+        #
+        #         optimizerD.zero_grad()
+        #         # pen.backward(retain_graph=True)  # ycz
+        #         loss_d.backward()
+        #         optimizerD.step()
+        #
+        #         fakez = torch.normal(mean=0.0, std=1.0, size=(batch_size, self._embedding_dim), device=self._device)
+        #         c1, m1, col, opt = self._data_sampler.sample_condvec(batch_size)
+        #
+        #         c1 = torch.from_numpy(c1).to(self._device)
+        #         m1 = torch.from_numpy(m1).to(self._device)
+        #         fakez = torch.cat([fakez, c1], dim=1)
+        #
+        #         fake = self._generator(fakez)
+        #         fakeact = self._apply_activate(fake)
+        #
+        #         y_fake = discriminator(torch.cat([fakeact, c1], dim=1))
+        #         # y_fake = discriminator(fakeact)
+        #
+        #         cross_entropy = self._cond_loss(fake, c1, m1)
+        #
+        #         loss_g = -torch.mean(y_fake) + cross_entropy
+        #
+        #         optimizerG.zero_grad()
+        #         loss_g.backward()
+        #         optimizerG.step()
+        #
+        #         if self._verbose and (i + 1) % 50 == 0:
+        #             print(f'Epoch {i+1}, Loss G: {loss_g.detach().cpu(): .4f},'  # noqa: T001
+        #                   f'Loss D: {loss_d.detach().cpu(): .4f}',
+        #                   flush=True)
+        for epoch in range(epochs):
             for batch_data in data_loader:
+
                 real_data = batch_data[0].to(self._device)
                 batch_size = real_data.shape[0]
 
-                c1, _, _, _ = self._data_sampler.sample_condvec(batch_size)
-                c1 = torch.from_numpy(c1).to(self._device)
+                condvec = self._data_sampler.sample_condvec(batch_size)
 
-                fakez = torch.normal(mean=0.0, std=1.0, size=(batch_size, self._embedding_dim), device=self._device)
-                fakez = torch.cat([fakez, c1], dim=1)
+                if condvec is None:
+                    c1 = None
+                else:
+                    c1, m1, col, opt = condvec
+                    c1 = torch.from_numpy(c1).to(self._device).float()
+                    m1 = torch.from_numpy(m1).to(self._device).float()
 
-                # perm = np.arange(self._batch_size)
-                # np.random.shuffle(perm)
-                # real = self._data_sampler.sample_data(
-                #     self._batch_size, col[perm], opt[perm])
-                # c2 = c1[perm]
+                fakez = torch.randn(
+                    batch_size,
+                    self._embedding_dim,
+                    device=self._device
+                )
+
+                if c1 is not None:
+                    fakez = torch.cat([fakez, c1], dim=1)
 
                 fake = self._generator(fakez)
                 fakeact = self._apply_activate(fake)
 
-                # real = torch.from_numpy(real.astype('float32')).to(self._device)
+                fakeact = fakeact.detach()
 
-                fake_cat = torch.cat([fakeact, c1], dim=1)
-                real_cat = torch.cat([real_data, c1], dim=1)
+                if c1 is not None:
+                    fake_cat = torch.cat([fakeact, c1], dim=1)
+                    real_cat = torch.cat([real_data, c1], dim=1)
+                else:
+                    fake_cat = fakeact
+                    real_cat = real_data
+
+                optimizerD.zero_grad(set_to_none=True)
 
                 y_fake = discriminator(fake_cat)
                 y_real = discriminator(real_cat)
 
-                # pen = discriminator.calc_gradient_penalty(
-                #     real_cat, fake_cat, self._device, self.pac)  # ycz
-                loss_d = -(torch.mean(y_real) - torch.mean(y_fake))
+                loss_d = -(y_real.mean() - y_fake.mean())
 
-                optimizerD.zero_grad()
-                # pen.backward(retain_graph=True)  # ycz
                 loss_d.backward()
                 optimizerD.step()
 
-                fakez = torch.normal(mean=0.0, std=1.0, size=(batch_size, self._embedding_dim), device=self._device)
-                c1, m1, col, opt = self._data_sampler.sample_condvec(batch_size)
+                condvec = self._data_sampler.sample_condvec(batch_size)
 
-                c1 = torch.from_numpy(c1).to(self._device)
-                m1 = torch.from_numpy(m1).to(self._device)
-                fakez = torch.cat([fakez, c1], dim=1)
+                if condvec is None:
+                    c1 = None
+                else:
+                    c1, m1, col, opt = condvec
+                    c1 = torch.from_numpy(c1).to(self._device).float()
+                    m1 = torch.from_numpy(m1).to(self._device).float()
+
+                fakez = torch.randn(
+                    batch_size,
+                    self._embedding_dim,
+                    device=self._device
+                )
+
+                if c1 is not None:
+                    fakez = torch.cat([fakez, c1], dim=1)
 
                 fake = self._generator(fakez)
                 fakeact = self._apply_activate(fake)
 
-                y_fake = discriminator(torch.cat([fakeact, c1], dim=1))
-                # y_fake = discriminator(fakeact)
+                fakeact_detached = fakeact.detach()
 
-                cross_entropy = self._cond_loss(fake, c1, m1)
+                if c1 is not None:
+                    y_fake = discriminator(torch.cat([fakeact_detached, c1], dim=1))
+                    cross_entropy = self._cond_loss(fake, c1, m1)
+                else:
+                    y_fake = discriminator(fakeact_detached)
+                    cross_entropy = 0.0
 
-                loss_g = -torch.mean(y_fake) + cross_entropy
+                loss_g = -y_fake.mean() + cross_entropy
 
-                optimizerG.zero_grad()
+                optimizerG.zero_grad(set_to_none=True)
                 loss_g.backward()
                 optimizerG.step()
 
-                if self._verbose and (i + 1) % 50 == 0:
-                    print(f'Epoch {i+1}, Loss G: {loss_g.detach().cpu(): .4f},'  # noqa: T001
-                          f'Loss D: {loss_d.detach().cpu(): .4f}',
-                          flush=True)
+            if self._verbose and (epoch + 1) % 50 == 0:
+                print(
+                    f"Epoch {epoch + 1} | "
+                    f"D: {loss_d.item():.4f} | "
+                    f"G: {loss_g.item():.4f}"
+                )
 
     @random_state
     def sample(self, n, condition_column=None, condition_value=None):
