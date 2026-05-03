@@ -9,6 +9,7 @@ from packaging import version
 from torch import optim
 from torch.nn import BatchNorm1d, Dropout, LeakyReLU, Linear, Module, ReLU, Sequential, functional
 from opacus import PrivacyEngine
+import opacus
 from torch.utils.data import DataLoader, TensorDataset
 
 from ..data_sampler import DataSampler
@@ -367,171 +368,93 @@ class CTGANSynthesizer(BaseSynthesizer):
             betas=(0.5, 0.9), weight_decay=self._discriminator_decay
         )
 
+        noise_multiplier = 0.0
+
+        if self.epsilon > 0:
+            noise_multiplier = opacus.accountants.utils.get_noise_multiplier(
+                target_epsilon=self.epsilon,
+                target_delta=self.delta,
+                sample_rate=1 / len(data_loader),
+                epochs=self._epochs,
+            )
+            print(f"{noise_multiplier=}")
+
         privacy_engine = PrivacyEngine()
-        discriminator, optimizerD, data_loader = privacy_engine.make_private_with_epsilon(
+
+        discriminator, optimizerD, data_loader = privacy_engine.make_private(
             module=discriminator,
             optimizer=optimizerD,
             data_loader=data_loader,
-            target_epsilon=self.epsilon,
-            target_delta=self.delta,
+            noise_multiplier=noise_multiplier,
             max_grad_norm=self.max_grad_norm,
-            epochs=epochs,
         )
 
         # mean = torch.zeros(self._batch_size, self._embedding_dim, device=self._device)
         # std = mean + 1
 
         print('CTGAN training')
-        # for i in range(epochs):
-        #     for batch_data in data_loader:
-        #         real_data = batch_data[0].to(self._device)
-        #         batch_size = real_data.shape[0]
-        #
-        #         c1, _, _, _ = self._data_sampler.sample_condvec(batch_size)
-        #         c1 = torch.from_numpy(c1).to(self._device)
-        #
-        #         fakez = torch.normal(mean=0.0, std=1.0, size=(batch_size, self._embedding_dim), device=self._device)
-        #         fakez = torch.cat([fakez, c1], dim=1)
-        #
-        #         # perm = np.arange(self._batch_size)
-        #         # np.random.shuffle(perm)
-        #         # real = self._data_sampler.sample_data(
-        #         #     self._batch_size, col[perm], opt[perm])
-        #         # c2 = c1[perm]
-        #
-        #         fake = self._generator(fakez)
-        #         fakeact = self._apply_activate(fake)
-        #
-        #         # real = torch.from_numpy(real.astype('float32')).to(self._device)
-        #
-        #         fake_cat = torch.cat([fakeact, c1], dim=1)
-        #         real_cat = torch.cat([real_data, c1], dim=1)
-        #
-        #         y_fake = discriminator(fake_cat)
-        #         y_real = discriminator(real_cat)
-        #
-        #         # pen = discriminator.calc_gradient_penalty(
-        #         #     real_cat, fake_cat, self._device, self.pac)  # ycz
-        #         loss_d = -(torch.mean(y_real) - torch.mean(y_fake))
-        #
-        #         optimizerD.zero_grad()
-        #         # pen.backward(retain_graph=True)  # ycz
-        #         loss_d.backward()
-        #         optimizerD.step()
-        #
-        #         fakez = torch.normal(mean=0.0, std=1.0, size=(batch_size, self._embedding_dim), device=self._device)
-        #         c1, m1, col, opt = self._data_sampler.sample_condvec(batch_size)
-        #
-        #         c1 = torch.from_numpy(c1).to(self._device)
-        #         m1 = torch.from_numpy(m1).to(self._device)
-        #         fakez = torch.cat([fakez, c1], dim=1)
-        #
-        #         fake = self._generator(fakez)
-        #         fakeact = self._apply_activate(fake)
-        #
-        #         y_fake = discriminator(torch.cat([fakeact, c1], dim=1))
-        #         # y_fake = discriminator(fakeact)
-        #
-        #         cross_entropy = self._cond_loss(fake, c1, m1)
-        #
-        #         loss_g = -torch.mean(y_fake) + cross_entropy
-        #
-        #         optimizerG.zero_grad()
-        #         loss_g.backward()
-        #         optimizerG.step()
-        #
-        #         if self._verbose and (i + 1) % 50 == 0:
-        #             print(f'Epoch {i+1}, Loss G: {loss_g.detach().cpu(): .4f},'  # noqa: T001
-        #                   f'Loss D: {loss_d.detach().cpu(): .4f}',
-        #                   flush=True)
-        for epoch in range(epochs):
+        for i in range(epochs):
             for batch_data in data_loader:
-
                 real_data = batch_data[0].to(self._device)
                 batch_size = real_data.shape[0]
 
-                condvec = self._data_sampler.sample_condvec(batch_size)
+                c1, _, _, _ = self._data_sampler.sample_condvec(batch_size)
+                c1 = torch.from_numpy(c1).to(self._device)
 
-                if condvec is None:
-                    c1 = None
-                else:
-                    c1, m1, col, opt = condvec
-                    c1 = torch.from_numpy(c1).to(self._device).float()
-                    m1 = torch.from_numpy(m1).to(self._device).float()
+                fakez = torch.normal(mean=0.0, std=1.0, size=(batch_size, self._embedding_dim), device=self._device)
+                fakez = torch.cat([fakez, c1], dim=1)
 
-                fakez = torch.randn(
-                    batch_size,
-                    self._embedding_dim,
-                    device=self._device
-                )
-
-                if c1 is not None:
-                    fakez = torch.cat([fakez, c1], dim=1)
+                # perm = np.arange(self._batch_size)
+                # np.random.shuffle(perm)
+                # real = self._data_sampler.sample_data(
+                #     self._batch_size, col[perm], opt[perm])
+                # c2 = c1[perm]
 
                 fake = self._generator(fakez)
                 fakeact = self._apply_activate(fake)
 
-                fakeact = fakeact.detach()
+                # real = torch.from_numpy(real.astype('float32')).to(self._device)
 
-                if c1 is not None:
-                    fake_cat = torch.cat([fakeact, c1], dim=1)
-                    real_cat = torch.cat([real_data, c1], dim=1)
-                else:
-                    fake_cat = fakeact
-                    real_cat = real_data
-
-                optimizerD.zero_grad(set_to_none=True)
+                fake_cat = torch.cat([fakeact, c1], dim=1)
+                real_cat = torch.cat([real_data, c1], dim=1)
 
                 y_fake = discriminator(fake_cat)
                 y_real = discriminator(real_cat)
 
-                loss_d = -(y_real.mean() - y_fake.mean())
+                # pen = discriminator.calc_gradient_penalty(
+                #     real_cat, fake_cat, self._device, self.pac)  # ycz
+                loss_d = -(torch.mean(y_real) - torch.mean(y_fake))
 
+                optimizerD.zero_grad()
+                # pen.backward(retain_graph=True)  # ycz
                 loss_d.backward()
                 optimizerD.step()
 
-                condvec = self._data_sampler.sample_condvec(batch_size)
+                fakez = torch.normal(mean=0.0, std=1.0, size=(batch_size, self._embedding_dim), device=self._device)
+                c1, m1, col, opt = self._data_sampler.sample_condvec(batch_size)
 
-                if condvec is None:
-                    c1 = None
-                else:
-                    c1, m1, col, opt = condvec
-                    c1 = torch.from_numpy(c1).to(self._device).float()
-                    m1 = torch.from_numpy(m1).to(self._device).float()
-
-                fakez = torch.randn(
-                    batch_size,
-                    self._embedding_dim,
-                    device=self._device
-                )
-
-                if c1 is not None:
-                    fakez = torch.cat([fakez, c1], dim=1)
+                c1 = torch.from_numpy(c1).to(self._device)
+                m1 = torch.from_numpy(m1).to(self._device)
+                fakez = torch.cat([fakez, c1], dim=1)
 
                 fake = self._generator(fakez)
                 fakeact = self._apply_activate(fake)
 
-                fakeact_detached = fakeact.detach()
+                y_fake = discriminator(torch.cat([fakeact, c1], dim=1))
+                # y_fake = discriminator(fakeact)
 
-                if c1 is not None:
-                    y_fake = discriminator(torch.cat([fakeact_detached, c1], dim=1))
-                    cross_entropy = self._cond_loss(fake, c1, m1)
-                else:
-                    y_fake = discriminator(fakeact_detached)
-                    cross_entropy = 0.0
+                cross_entropy = self._cond_loss(fake, c1, m1)
 
-                loss_g = -y_fake.mean() + cross_entropy
+                loss_g = -torch.mean(y_fake) + cross_entropy
 
-                optimizerG.zero_grad(set_to_none=True)
+                optimizerG.zero_grad()
                 loss_g.backward()
                 optimizerG.step()
 
-            if self._verbose and (epoch + 1) % 50 == 0:
-                print(
-                    f"Epoch {epoch + 1} | "
-                    f"D: {loss_d.item():.4f} | "
-                    f"G: {loss_g.item():.4f}"
-                )
+                if self._verbose and (i + 1) % 50 == 0:
+                    print(f'Epoch {i+1}, Loss G: {loss_g.detach().cpu(): .4f},'  # noqa: T001
+                          f'Loss D: {loss_d.detach().cpu(): .4f}',
+                          flush=True)
 
     @random_state
     def sample(self, n, condition_column=None, condition_value=None):
