@@ -368,7 +368,6 @@ class CTGANSynthesizer(BaseSynthesizer):
         )
 
         privacy_engine = PrivacyEngine()
-        steps = epochs * self._discriminator_steps
         discriminator, optimizerD, data_loader = privacy_engine.make_private_with_epsilon(
             module=discriminator,
             optimizer=optimizerD,
@@ -377,12 +376,11 @@ class CTGANSynthesizer(BaseSynthesizer):
             target_delta=self.delta,
             max_grad_norm=self.max_grad_norm,
             epochs=epochs,
+            poisson_sampling=False
         )
 
         # mean = torch.zeros(self._batch_size, self._embedding_dim, device=self._device)
         # std = mean + 1
-        mean = torch.zeros(self._embedding_dim, device=self._device)
-        std = torch.ones(self._embedding_dim, device=self._device)
 
         print('CTGAN training')
         for i in range(epochs):
@@ -390,18 +388,11 @@ class CTGANSynthesizer(BaseSynthesizer):
                 real_data = batch_data[0].to(self._device)
                 batch_size = real_data.shape[0]
 
-                condvec = self._data_sampler.sample_condvec(batch_size)
-                if condvec is None:
-                    c1, m1 = None, None
-                else:
-                    c1, m1, col, opt = condvec
-                    c1 = torch.from_numpy(c1).to(self._device)
-                    m1 = torch.from_numpy(m1).to(self._device)
+                c1, _, _, _ = self._data_sampler.sample_condvec(batch_size)
+                c1 = torch.from_numpy(c1).to(self._device)
 
-                # fakez = torch.normal(mean=mean[:batch_size], std=std[:batch_size])
                 fakez = torch.normal(mean=0.0, std=1.0, size=(batch_size, self._embedding_dim), device=self._device)
-                if c1 is not None:
-                    fakez = torch.cat([fakez, c1], dim=1)
+                fakez = torch.cat([fakez, c1], dim=1)
 
                 # perm = np.arange(self._batch_size)
                 # np.random.shuffle(perm)
@@ -414,12 +405,8 @@ class CTGANSynthesizer(BaseSynthesizer):
 
                 # real = torch.from_numpy(real.astype('float32')).to(self._device)
 
-                if c1 is not None:
-                    fake_cat = torch.cat([fakeact, c1], dim=1)
-                    real_cat = torch.cat([real_data, c1], dim=1)
-                else:
-                    real_cat = real_data
-                    fake_cat = fakeact
+                fake_cat = torch.cat([fakeact, c1], dim=1)
+                real_cat = torch.cat([real_data, c1], dim=1)
 
                 y_fake = discriminator(fake_cat)
                 y_real = discriminator(real_cat)
@@ -434,28 +421,19 @@ class CTGANSynthesizer(BaseSynthesizer):
                 optimizerD.step()
 
                 fakez = torch.normal(mean=0.0, std=1.0, size=(batch_size, self._embedding_dim), device=self._device)
-                condvec = self._data_sampler.sample_condvec(batch_size)
+                c1, m1, col, opt = self._data_sampler.sample_condvec(batch_size)
 
-                if condvec is None:
-                    c1, m1, col, opt = None, None, None, None
-                else:
-                    c1, m1, col, opt = condvec
-                    c1 = torch.from_numpy(c1).to(self._device)
-                    m1 = torch.from_numpy(m1).to(self._device)
-                    fakez = torch.cat([fakez, c1], dim=1)
+                c1 = torch.from_numpy(c1).to(self._device)
+                m1 = torch.from_numpy(m1).to(self._device)
+                fakez = torch.cat([fakez, c1], dim=1)
 
                 fake = self._generator(fakez)
                 fakeact = self._apply_activate(fake)
 
-                if c1 is not None:
-                    y_fake = discriminator(torch.cat([fakeact, c1], dim=1))
-                else:
-                    y_fake = discriminator(fakeact)
+                y_fake = discriminator(torch.cat([fakeact, c1], dim=1))
+                # y_fake = discriminator(fakeact)
 
-                if condvec is None:
-                    cross_entropy = 0
-                else:
-                    cross_entropy = self._cond_loss(fake, c1, m1)
+                cross_entropy = self._cond_loss(fake, c1, m1)
 
                 loss_g = -torch.mean(y_fake) + cross_entropy
 
