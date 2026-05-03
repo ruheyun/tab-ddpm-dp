@@ -25,7 +25,7 @@ def save_file(parent_dir, config_path):
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--config', metavar='FILE', default='exp/buddy/ctgan/config.toml')
+    parser.add_argument('--config', metavar='FILE', default='exp/wilt/ctgan/config.toml')
     parser.add_argument('--train', action='store_true',  default=False)
     parser.add_argument('--sample', action='store_true',  default=False)
     parser.add_argument('--eval', action='store_true',  default=False)
