@@ -377,11 +377,12 @@ class CTGANSynthesizer(BaseSynthesizer):
             target_delta=self.delta,
             max_grad_norm=self.max_grad_norm,
             epochs=epochs,
-            # steps=steps
         )
 
-        mean = torch.zeros(self._batch_size, self._embedding_dim, device=self._device)
-        std = mean + 1
+        # mean = torch.zeros(self._batch_size, self._embedding_dim, device=self._device)
+        # std = mean + 1
+        mean = torch.zeros(self._embedding_dim, device=self._device)
+        std = torch.ones(self._embedding_dim, device=self._device)
 
         print('CTGAN training')
         for i in range(epochs):
@@ -397,7 +398,8 @@ class CTGANSynthesizer(BaseSynthesizer):
                     c1 = torch.from_numpy(c1).to(self._device)
                     m1 = torch.from_numpy(m1).to(self._device)
 
-                fakez = torch.normal(mean=mean[:batch_size], std=std[:batch_size])
+                # fakez = torch.normal(mean=mean[:batch_size], std=std[:batch_size])
+                fakez = torch.normal(mean=mean, std=std, size=(batch_size, self._embedding_dim))
                 if c1 is not None:
                     fakez = torch.cat([fakez, c1], dim=1)
 
@@ -431,7 +433,7 @@ class CTGANSynthesizer(BaseSynthesizer):
                 loss_d.backward()
                 optimizerD.step()
 
-                fakez = torch.normal(mean=mean, std=std)
+                fakez = torch.normal(mean=mean, std=std, size=(batch_size, self._embedding_dim))
                 condvec = self._data_sampler.sample_condvec(batch_size)
 
                 if condvec is None:
