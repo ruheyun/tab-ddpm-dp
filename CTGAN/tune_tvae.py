@@ -13,13 +13,13 @@ from scripts.eval_catboost import train_catboost
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--data_path', type=str, default='data/adult')
-parser.add_argument('--train_size', type=int, default=26048)
+parser.add_argument('--train_size', type=int, default=12000)
 parser.add_argument('--eval_type', type=str, default='synthetic')
 parser.add_argument('--device', type=str, default='cuda:0')
 parser.add_argument('--epsilon', type=float, default=10)
 parser.add_argument('--delta', type=float, default=1e-5)
 parser.add_argument('--max_grad_norm', type=float, default=1)
-parser.add_argument('--n_trials', type=int, default=50)
+parser.add_argument('--n_trials', type=int, default=15)
 
 
 args = parser.parse_args()
@@ -32,12 +32,10 @@ delta = args.delta
 max_grad_norm = args.max_grad_norm
 n_trials = args.n_trials
 assert eval_type in ('merged', 'synthetic')
-best_seed = 0
 
 
 def objective(trial):
-    global best_seed
-    
+
     lr = trial.suggest_loguniform('lr', 0.00001, 0.003)
 
     def suggest_dim(name):
@@ -57,25 +55,25 @@ def objective(trial):
     d_layers = d_first + d_middle + d_last
     ####
 
-    steps = trial.suggest_categorical('steps', [50, 100, 300, 500])
-    batch_size = trial.suggest_categorical('batch_size', [128, 256])
+    # steps = trial.suggest_categorical('steps', [50, 100, 300, 500])
+    # batch_size = trial.suggest_categorical('batch_size', [128, 256])
 
-    num_samples = int(train_size * (2 ** trial.suggest_int('frac_samples', -1, 2)))
-    embedding_dim = 2 ** trial.suggest_int('embedding_dim', 6, 9)
+    # num_samples = int(train_size * (2 ** trial.suggest_int('frac_samples', -1, 2)))
+    embedding_dim = 2 ** trial.suggest_int('embedding_dim', 6, 8)
     loss_factor = trial.suggest_loguniform('loss_factor', 0.001, 10)
 
     train_params = {
         "lr": lr,
-        "epochs": steps,
+        "epochs": 300,
         "embedding_dim": embedding_dim,
-        "batch_size": batch_size,
+        "batch_size": 128,
         "loss_factor": loss_factor,
         "compress_dims": d_layers,
         "decompress_dims": d_layers
     }
 
     trial.set_user_attr("train_params", train_params)
-    trial.set_user_attr("num_samples", num_samples)
+    # trial.set_user_attr("num_samples", num_samples)
 
     score = 0.0
     with tempfile.TemporaryDirectory() as dir_:
@@ -96,7 +94,7 @@ def objective(trial):
                 tvae,
                 parent_dir=dir_,
                 real_data_path=real_data_path,
-                num_samples=num_samples,
+                num_samples=train_size,
                 train_params=train_params,
                 change_val=False,
                 seed=sample_seed,
@@ -120,11 +118,9 @@ def objective(trial):
                 change_val=False,
                 seed=0
             )
-            if score <= metrics.get_dp_score():
-                score = metrics.get_dp_score()
-                best_seed = sample_seed
-            # score += metrics.get_dp_score()
-    return score
+
+            score += metrics.get_dp_score()
+    return score / 5
 
 
 study = optuna.create_study(
@@ -141,7 +137,7 @@ config = {
     "seed": 0,
     "device": args.device,
     "train_params": study.best_trial.user_attrs["train_params"],
-    "sample": {"seed": best_seed, "num_samples": study.best_trial.user_attrs["num_samples"]},
+    "sample": {"seed": 0, "num_samples": study.best_trial.user_attrs["num_samples"]},
     "eval": {
         "type": {"eval_model": "catboost", "eval_type": eval_type},
         "T": {
