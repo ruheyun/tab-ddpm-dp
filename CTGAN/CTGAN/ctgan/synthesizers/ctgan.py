@@ -376,7 +376,6 @@ class CTGANSynthesizer(BaseSynthesizer):
             target_delta=self.delta,
             max_grad_norm=self.max_grad_norm,
             epochs=epochs,
-            poisson_sampling=False
         )
 
         # mean = torch.zeros(self._batch_size, self._embedding_dim, device=self._device)
