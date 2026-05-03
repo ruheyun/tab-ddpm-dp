@@ -32,12 +32,10 @@ delta = args.delta
 max_grad_norm = args.max_grad_norm
 n_trials = args.n_trials
 assert eval_type in ('merged', 'synthetic')
-best_seed = 0
 
 
 def objective(trial):
-    global best_seed
-    
+
     lr = trial.suggest_loguniform('lr', 0.00001, 0.003)
 
     def suggest_dim(name):
@@ -57,24 +55,24 @@ def objective(trial):
     d_layers = d_first + d_middle + d_last
     ####
 
-    steps = trial.suggest_categorical('steps', [50, 100, 300, 500])
-    batch_size = trial.suggest_categorical('batch_size', [128, 256])
+    # steps = trial.suggest_categorical('steps', [50, 100, 300, 500])
+    # batch_size = trial.suggest_categorical('batch_size', [128, 256])
 
-    num_samples = int(train_size * (2 ** trial.suggest_int('frac_samples', -1, 2)))
+    # num_samples = int(train_size * (2 ** trial.suggest_int('frac_samples', -1, 2)))
     embedding_dim = 2 ** trial.suggest_int('embedding_dim', 6, 9)
 
     train_params = {
         "generator_lr": lr,
         "discriminator_lr": lr,
-        "epochs": steps,
+        "epochs": 300,
         "embedding_dim": embedding_dim,
-        "batch_size": batch_size,
+        "batch_size": 128,
         "generator_dim": d_layers,
         "discriminator_dim": d_layers
     }
 
     trial.set_user_attr("train_params", train_params)
-    trial.set_user_attr("num_samples", num_samples)
+    # trial.set_user_attr("num_samples", num_samples)
 
     score = 0.0
     with tempfile.TemporaryDirectory() as dir_:
@@ -95,7 +93,7 @@ def objective(trial):
                 ctgan,
                 parent_dir=dir_,
                 real_data_path=real_data_path,
-                num_samples=num_samples,
+                num_samples=train_size,
                 train_params=train_params,
                 change_val=False,
                 seed=sample_seed,
@@ -119,11 +117,9 @@ def objective(trial):
                 change_val=False,
                 seed=0
             )
-            if score <= metrics.get_dp_score():
-                score = metrics.get_dp_score()
-                best_seed = sample_seed
-            # score += metrics.get_dp_score()
-    return score
+
+            score += metrics.get_dp_score()
+    return score / 5
 
 
 study = optuna.create_study(
@@ -140,7 +136,7 @@ config = {
     "seed": 0,
     "device": args.device,
     "train_params": study.best_trial.user_attrs["train_params"],
-    "sample": {"seed": best_seed, "num_samples": study.best_trial.user_attrs["num_samples"]},
+    "sample": {"seed": 0, "num_samples": study.best_trial.user_attrs["num_samples"]},
     "eval": {
         "type": {"eval_model": "catboost", "eval_type": eval_type},
         "T": {
