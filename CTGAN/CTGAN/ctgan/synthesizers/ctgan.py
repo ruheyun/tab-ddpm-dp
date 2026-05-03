@@ -452,10 +452,10 @@ class CTGANSynthesizer(BaseSynthesizer):
                 loss_g.backward()
                 optimizerG.step()
 
-                if self._verbose and (i + 1) % 50 == 0:
-                    print(f'Epoch {i+1}, Loss G: {loss_g.detach().cpu(): .4f},'  # noqa: T001
-                          f'Loss D: {loss_d.detach().cpu(): .4f}',
-                          flush=True)
+            if self._verbose and (i + 1) % 50 == 0:
+                print(f'Epoch {i+1}, Loss G: {loss_g.detach().cpu(): .4f},'  # noqa: T001
+                      f'Loss D: {loss_d.detach().cpu(): .4f}',
+                      flush=True)
 
     @random_state
     def sample(self, n, condition_column=None, condition_value=None):
