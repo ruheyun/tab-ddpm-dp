@@ -43,7 +43,7 @@ def objective(trial):
         return 2 ** t
     
     # construct model
-    min_n_layers, max_n_layers, d_min, d_max = 1, 3, 6, 9
+    min_n_layers, max_n_layers, d_min, d_max = 1, 2, 6, 9
     n_layers = 2 * trial.suggest_int('n_layers', min_n_layers, max_n_layers)
     d_first = [suggest_dim('d_first')] if n_layers else []
     d_middle = (
@@ -72,7 +72,7 @@ def objective(trial):
     }
 
     trial.set_user_attr("train_params", train_params)
-    # trial.set_user_attr("num_samples", num_samples)
+    trial.set_user_attr("num_samples", train_size)
 
     score = 0.0
     with tempfile.TemporaryDirectory() as dir_:
