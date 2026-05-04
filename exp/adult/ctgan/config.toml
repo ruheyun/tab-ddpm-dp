@@ -9,11 +9,11 @@ discriminator_lr = 1e-3
 epochs = 300
 embedding_dim = 128
 batch_size = 128
-generator_dims = [
+generator_dim = [
     256,
     256,
 ]
-discriminator_dims = [
+discriminator_dim = [
     256,
     256,
 ]
